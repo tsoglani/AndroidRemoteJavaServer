@@ -1,8 +1,3 @@
-﻿/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package mouseapp;
 
 import java.awt.AWTException;
@@ -12,16 +7,26 @@ import java.awt.Robot;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.bluetooth.BluetoothStateException;
+import javax.bluetooth.DeviceClass;
+
+import javax.bluetooth.DiscoveryAgent;
+import javax.bluetooth.DiscoveryListener;
 import javax.bluetooth.LocalDevice;
+import javax.bluetooth.RemoteDevice;
+import javax.bluetooth.ServiceRecord;
+import javax.bluetooth.UUID;
+import javax.microedition.io.Connector;
+import javax.microedition.io.StreamConnection;
+import javax.microedition.io.StreamConnectionNotifier;
 
 /**
  *
@@ -35,17 +40,13 @@ public class MouseApp {
     private Socket s;
 
     public MouseApp() {
-        try {
-            internetConnection();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+
     }
 
     /**
      * enables internet connection
      */
-    private void internetConnection() {
+    public void internetConnection() {
         new Thread() {
 
             @Override
@@ -75,12 +76,15 @@ public class MouseApp {
         }.start();
     }
 
-    private void bluetoothConnection() {
+    public ArrayList<String> bluetoothConnection() {
+        ArrayList<String> list = null;
         try {
-            LocalDevice ld = LocalDevice.getLocalDevice();
-        } catch (BluetoothStateException ex) {
-            ex.printStackTrace();
+            BluetoothDeviceDiscovery bl = new BluetoothDeviceDiscovery();
+            list = bl.getNames();
+        } catch (IOException ex) {
+            Logger.getLogger(MouseApp.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return list;
     }
 
     private void closeAll() {
@@ -88,8 +92,10 @@ public class MouseApp {
             pw.close();
             s.close();
             ss.close();
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
+        //    fr.createUI();
+            
         }
     }
 
@@ -97,6 +103,29 @@ public class MouseApp {
         try {
             try {
                 BufferedReader br = new BufferedReader(new InputStreamReader(s.getInputStream()));
+                while (true) {
+                    Thread.sleep(10);
+                    String line = br.readLine();
+                    System.out.println(line);
+                    processString(line);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+
+            }
+            closeAll();
+            Thread.sleep(1000);
+            new MouseApp();
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    
+       public void receiver(BufferedReader br) {
+        try {
+            try {
+           
                 while (true) {
                     Thread.sleep(10);
                     String line = br.readLine();
@@ -163,9 +192,159 @@ public class MouseApp {
 
         }
     }
-
+public static Fr fr;
     public static void main(String[] args) {
-        new MouseApp();
+        fr=new Fr();
     }
 
-}
+    public class BluetoothDeviceDiscovery implements DiscoveryListener {
+
+//object used for waiting
+        private Object lock = new Object();
+
+//vector containing the devices discovered
+        private Vector vecDevices = new Vector();
+
+//main method of the application
+        public BluetoothDeviceDiscovery() {
+        }
+
+        public ArrayList<String> getNames() throws IOException {
+            ArrayList<String> list = new ArrayList<String>();
+
+//create an instance of this class
+//display local device address and name
+            LocalDevice localDevice = LocalDevice.getLocalDevice();
+            System.out.println("Address: " + localDevice.getBluetoothAddress());
+            System.out.println("Name: " + localDevice.getFriendlyName());
+
+//find devices
+            DiscoveryAgent agent = localDevice.getDiscoveryAgent();
+
+            System.out.println("Starting device inquiry…");
+            agent.startInquiry(DiscoveryAgent.GIAC, this);
+
+            try {
+                synchronized (lock) {
+                    lock.wait();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            System.out.println("Device Inquiry Completed. ");
+
+//print all devices in vecDevices
+            int deviceCount = vecDevices.size();
+
+            if (deviceCount <= 0) {
+                System.out.println("No Devices Found .");
+            } else {
+//print bluetooth device addresses and names in the format [ No. address (name) ]
+                System.out.println("Bluetooth Devices:" + Integer.toString(deviceCount));
+                for (int i = 0; i < deviceCount; i++) {
+                    RemoteDevice remoteDevice = (RemoteDevice) vecDevices.elementAt(i);
+                    System.out.println((i + 1) + ". “+remoteDevice.getBluetoothAddress()+ (" + remoteDevice.getFriendlyName(false) + ")");
+
+                    list.add(remoteDevice.getFriendlyName(false));
+                }
+
+            }
+
+            return list;
+        }
+
+        public void inquiryCompleted(int discType) {
+            synchronized (lock) {
+                lock.notify();
+            }
+
+            switch (discType) {
+                case DiscoveryListener.INQUIRY_COMPLETED:
+                    System.out.println("INQUIRY_COMPLETED");
+                    break;
+
+                case DiscoveryListener.INQUIRY_TERMINATED:
+                    System.out.println("INQUIRY_TERMINATED");
+                    break;
+
+                case DiscoveryListener.INQUIRY_ERROR:
+                    System.out.println("INQUIRY_ERROR");
+                    break;
+
+                default:
+                    System.out.println("Unknown Response Code");
+                    break;
+            }
+        }//end method
+
+        @Override
+        public void deviceDiscovered(RemoteDevice btDevice, DeviceClass dc) {
+            if (!vecDevices.contains(btDevice)) {
+                vecDevices.addElement(btDevice);
+            }
+        }
+
+        @Override
+        public void servicesDiscovered(int arg0, ServiceRecord[] srs) {
+        
+            if(srs.length>0){
+                System.out.println(srs[0].getConnectionURL(ServiceRecord.NOAUTHENTICATE_NOENCRYPT, false));
+            }
+        }
+
+        @Override
+        public void serviceSearchCompleted(int i, int i1) {
+
+        }
+    }//end 
+  StreamConnection connection = null;
+    void openBT() throws IOException {
+        LocalDevice local = null;
+
+        StreamConnectionNotifier notifier;
+      
+
+        // setup the server to listen for connection
+        try {
+            local = LocalDevice.getLocalDevice();
+            local.setDiscoverable(DiscoveryAgent.GIAC);
+
+            UUID uuid = new UUID(80087355); // "04c6093b-0000-1000-8000-00805f9b34fb"
+            String url = "btspp://localhost:" + uuid.toString() + ";name=RemoteBluetooth";
+            notifier = (StreamConnectionNotifier) Connector.open(url);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+        // waiting for connection
+        while (true) {
+            try {
+                System.out.println("waiting for connection...");
+                connection = notifier.acceptAndOpen();
+                System.out.println("connected "+connection.toString());
+                pw = new PrintWriter(connection.openOutputStream(), true);
+                pw.println("works");
+                new Thread() {
+
+                        @Override
+                        public void run() {
+
+                            try {
+                            BufferedReader br = new BufferedReader(new InputStreamReader(connection.openInputStream(), "UTF-8"));
+                            receiver(br);
+                            } catch (Exception ex) {
+                                Logger.getLogger(MouseApp.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                          
+
+                        }
+                    }.start();
+            } catch (Exception e) {
+                e.printStackTrace();
+                return;
+            }
+        }
+    }
+}//end class
+
