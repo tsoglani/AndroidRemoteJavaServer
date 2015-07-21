@@ -3,16 +3,21 @@ package mouseapp;
 import java.awt.AWTException;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
 import java.awt.Robot;
+import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,6 +29,12 @@ import javax.bluetooth.LocalDevice;
 import javax.bluetooth.RemoteDevice;
 import javax.bluetooth.ServiceRecord;
 import javax.bluetooth.UUID;
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
 import javax.microedition.io.Connector;
 import javax.microedition.io.StreamConnection;
 import javax.microedition.io.StreamConnectionNotifier;
@@ -37,7 +48,7 @@ public class MouseApp {
     final int port = 2000;
     private ServerSocket ss;
     private PrintWriter pw;
-    private Socket s;
+    private static Socket s;
 
     public MouseApp() {
 
@@ -94,8 +105,8 @@ public class MouseApp {
             ss.close();
         } catch (Exception ex) {
             ex.printStackTrace();
-        //    fr.createUI();
-            
+            //    fr.createUI();
+
         }
     }
 
@@ -115,17 +126,16 @@ public class MouseApp {
             }
             closeAll();
             Thread.sleep(1000);
-            new MouseApp();
+            internetConnection();
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
     }
-    
-    
-       public void receiver(BufferedReader br) {
+
+    public void receiver(BufferedReader br) {
         try {
             try {
-           
+
                 while (true) {
                     Thread.sleep(10);
                     String line = br.readLine();
@@ -138,7 +148,11 @@ public class MouseApp {
             }
             closeAll();
             Thread.sleep(1000);
-            new MouseApp();
+            try {
+                openBT();
+            } catch (IOException ex) {
+                Logger.getLogger(MouseApp.class.getName()).log(Level.SEVERE, null, ex);
+            }
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
@@ -190,11 +204,51 @@ public class MouseApp {
             int height = gd.getDisplayMode().getHeight();
             robot.mouseMove(width * Integer.parseInt(values[2].replace("z:", "")) / 5000, height - height * Integer.parseInt(values[1].replace("y:", "")) / 5000);
 
+        } else if (line.equalsIgnoreCase("SCREENSHOT") && s != null) {
+            try {
+
+                OutputStream out = s.getOutputStream();
+                writeJPG(getComputerScreenshot(), out, 0.2f);
+               // ImageIO.write(getComputerScreenshot(), "PNG", out);
+                //  out.close();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }
-public static Fr fr;
+
+    public static void writeJPG(
+            BufferedImage bufferedImage,
+            OutputStream outputStream,
+            float quality) throws IOException {
+        Iterator<ImageWriter> iterator
+                = ImageIO.getImageWritersByFormatName("jpg");
+        ImageWriter imageWriter = iterator.next();
+        ImageWriteParam imageWriteParam = imageWriter.getDefaultWriteParam();
+        imageWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        imageWriteParam.setCompressionQuality(quality);
+        ImageOutputStream imageOutputStream
+                = new MemoryCacheImageOutputStream(outputStream);
+        imageWriter.setOutput(imageOutputStream);
+        IIOImage iioimage = new IIOImage(bufferedImage, null, null);
+        imageWriter.write(null, iioimage, imageWriteParam);
+        imageOutputStream.flush();
+    }
+
+    public static BufferedImage getComputerScreenshot() {
+        Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
+        BufferedImage capture = null;
+        try {
+            capture = new Robot().createScreenCapture(screenRect);
+        } catch (AWTException ex) {
+            Logger.getLogger(Fr.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return capture;
+    }
+    public static Fr fr;
+
     public static void main(String[] args) {
-        fr=new Fr();
+        fr = new Fr();
     }
 
     public class BluetoothDeviceDiscovery implements DiscoveryListener {
@@ -287,8 +341,8 @@ public static Fr fr;
 
         @Override
         public void servicesDiscovered(int arg0, ServiceRecord[] srs) {
-        
-            if(srs.length>0){
+
+            if (srs.length > 0) {
                 System.out.println(srs[0].getConnectionURL(ServiceRecord.NOAUTHENTICATE_NOENCRYPT, false));
             }
         }
@@ -298,12 +352,12 @@ public static Fr fr;
 
         }
     }//end 
-  StreamConnection connection = null;
+    StreamConnection connection = null;
+
     void openBT() throws IOException {
         LocalDevice local = null;
 
         StreamConnectionNotifier notifier;
-      
 
         // setup the server to listen for connection
         try {
@@ -322,29 +376,29 @@ public static Fr fr;
             try {
                 System.out.println("waiting for connection...");
                 connection = notifier.acceptAndOpen();
-                System.out.println("connected "+connection.toString());
+                System.out.println("connected " + connection.toString());
                 pw = new PrintWriter(connection.openOutputStream(), true);
                 pw.println("works");
                 new Thread() {
 
-                        @Override
-                        public void run() {
+                    @Override
+                    public void run() {
 
-                            try {
+                        try {
                             BufferedReader br = new BufferedReader(new InputStreamReader(connection.openInputStream(), "UTF-8"));
                             receiver(br);
-                            } catch (Exception ex) {
-                                Logger.getLogger(MouseApp.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                          
-
+                        } catch (Exception ex) {
+                            Logger.getLogger(MouseApp.class.getName()).log(Level.SEVERE, null, ex);
                         }
-                    }.start();
+
+                    }
+                }.start();
             } catch (Exception e) {
                 e.printStackTrace();
                 return;
             }
         }
     }
+
 }//end class
 

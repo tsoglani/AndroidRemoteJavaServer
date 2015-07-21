@@ -5,9 +5,16 @@
  */
 package mouseapp;
 
+import java.awt.AWTException;
 import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.Robot;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -47,28 +54,28 @@ public class Fr extends JFrame {
             public void actionPerformed(ActionEvent e) {
 
                 ArrayList<String> list = mouseApp.bluetoothConnection();
-              //  if (list.size() <= 0) {
-                    System.out.println("No devices");
+                //  if (list.size() <= 0) {
+                System.out.println("No devices");
                //     return;
-              //  }
+                //  }
                 getContentPane().removeAll();
                 JComboBox combo = new JComboBox(list.toArray());
                 JLabel label = new JLabel("Bluetooth Devices :");
                 add(label);
                 add(combo);
-                 JButton connect = new JButton("Activate Server ");
-                    add(connect);
-                    connect.addActionListener(new ActionListener(){
+                JButton connect = new JButton("Activate Server ");
+                add(connect);
+                connect.addActionListener(new ActionListener() {
 
-                  @Override
-                  public void actionPerformed(ActionEvent e) {
-                      try {
-                          mouseApp.openBT();
-                      } catch (IOException ex) {
-                      ex.printStackTrace();
-                      }
-                  }
-              });
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            mouseApp.openBT();
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                });
                 revalidate();
                 repaint();
             }
@@ -84,4 +91,16 @@ public class Fr extends JFrame {
             }
         });
     }
+
+//    @Override
+//    public void paint(Graphics g) {
+//        super.paint(g); //To change body of generated methods, choose Tools | Templates.
+//Graphics2D g2d=(Graphics2D) g;
+//BufferedImage bf=getComputerScreenshot();
+//g2d.scale((double)getWidth()/bf.getWidth(),(double)getHeight()/bf.getHeight());
+//g2d.drawImage(getComputerScreenshot(), null, 0, 0);
+//    }
+
+   
+
 }
