@@ -52,44 +52,59 @@ public class Fr extends JFrame {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-
-                ArrayList<String> list = mouseApp.bluetoothConnection();
-                //  if (list.size() <= 0) {
-                System.out.println("No devices");
-               //     return;
-                //  }
                 getContentPane().removeAll();
-                JComboBox combo = new JComboBox(list.toArray());
-                JLabel label = new JLabel("Bluetooth Devices :");
-                add(label);
-                add(combo);
-                JButton connect = new JButton("Activate Server ");
-                add(connect);
-                connect.addActionListener(new ActionListener() {
+                try {
+                    mouseApp.openBT();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+          //  }
+//                ArrayList<String> list = mouseApp.bluetoothConnection();
+//                //  if (list.size() <= 0) {
+//                System.out.println("No devices");
+//               //     return;
+//                //  }
 
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        try {
-                            mouseApp.openBT();
-                        } catch (IOException ex) {
-                            ex.printStackTrace();
-                        }
-                    }
-                });
-                revalidate();
-                repaint();
-            }
-        });
-        internet.addActionListener(new ActionListener() {
+//                JComboBox combo = new JComboBox(list.toArray());
+//                JLabel label = new JLabel("Bluetooth Devices :");
+//                add(label);
+//                add(combo);
+//                JButton connect = new JButton("Activate Server ");
+//                add(connect);
+//                connect.addActionListener(new ActionListener() {
+//
+//                    @Override
+//                    public void actionPerformed(ActionEvent e) {
+//                        try {
+//                            mouseApp.openBT();
+//                        } catch (IOException ex) {
+//                            ex.printStackTrace();
+//                        }
+//                    }
+//                });
+            revalidate();
+
+            repaint();
+        }
+    }
+
+    );
+    internet.addActionListener ( 
+        new ActionListener() {
 
             @Override
-            public void actionPerformed(ActionEvent e) {
+        public void actionPerformed
+        (ActionEvent e
+        
+            ) {
                 mouseApp.internetConnection();
-                getContentPane().removeAll();
-                revalidate();
-                repaint();
-            }
-        });
+            getContentPane().removeAll();
+            revalidate();
+            repaint();
+        }
+    }
+
+);
     }
 
 //    @Override
