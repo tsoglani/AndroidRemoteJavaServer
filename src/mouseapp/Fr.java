@@ -52,6 +52,7 @@ public class Fr extends JFrame {
                     @Override
                     public void run() {
                         try {
+                        	 MouseApp.runConnetions=true;
                             mouseApp.openBT();
                         } catch (IOException ex) {
                             ex.printStackTrace();
@@ -96,9 +97,10 @@ public class Fr extends JFrame {
                     @Override
                     public void actionPerformed(ActionEvent e
                     ) {
+                        MouseApp.runConnetions=true;
                         mouseApp.internetConnection();
                         getContentPane().removeAll();
-                        
+           
                         JButton back = new JButton("Go Back");
                         back.addActionListener(goHome);
                         add(back);
@@ -117,6 +119,7 @@ public class Fr extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             mouseApp.closeAll();
+            MouseApp.runConnetions=false;
             createUI();
         }
     };

@@ -51,7 +51,7 @@ public class MouseApp {
     private static Socket s;
     private StreamConnection connection = null;
     private BufferedReader br;
-
+    public static boolean runConnetions=false;
     public MouseApp() {
 
     }
@@ -101,7 +101,8 @@ public class MouseApp {
     }
 
     protected void closeAll() {
-        try {
+    	runConnetions=false;
+    	try {
             if (br != null) {
                 br.close();
                 br=null;
@@ -140,11 +141,12 @@ public class MouseApp {
         System.gc();
     }
 
+
     public void receiver(Socket s) {
         try {
             try {
                 br = new BufferedReader(new InputStreamReader(s.getInputStream()));
-                while (true) {
+                while (runConnetions) {
                     Thread.sleep(10);
                     String line = br.readLine();
                     //    System.out.println(line);
@@ -166,7 +168,7 @@ public class MouseApp {
         try {
             try {
 
-                while (true) {
+                while (runConnetions) {
                     Thread.sleep(10);
                     this.br = br;
                     String line = br.readLine();
@@ -407,7 +409,7 @@ public class MouseApp {
             return;
         }
         // waiting for connection
-        while (true) {
+        while (runConnetions) {
             try {
                 System.out.println("waiting for connection...");
                 connection = notifier.acceptAndOpen();
