@@ -41,20 +41,32 @@ public class Fr extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 getContentPane().removeAll();
-                try {
-                    mouseApp.openBT();
-                    revalidate();
-                    repaint();
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
-          //  }
+
+                revalidate();
+                repaint();
+                JButton back = new JButton("Go Back");
+                back.addActionListener(goHome);
+                add(back);
+                new Thread() {
+
+                    @Override
+                    public void run() {
+                        try {
+                            mouseApp.openBT();
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
+
+                    }
+
+                }.start();
+
+                //  }
 //                ArrayList<String> list = mouseApp.bluetoothConnection();
 //                //  if (list.size() <= 0) {
 //                System.out.println("No devices");
 //               //     return;
 //                //  }
-
 //                JComboBox combo = new JComboBox(list.toArray());
 //                JLabel label = new JLabel("Bluetooth Devices :");
 //                add(label);
@@ -72,31 +84,42 @@ public class Fr extends JFrame {
 //                        }
 //                    }
 //                });
-            revalidate();
+                revalidate();
 
-            repaint();
+                repaint();
+            }
         }
+        );
+        internet.addActionListener(
+                new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e
+                    ) {
+                        mouseApp.internetConnection();
+                        getContentPane().removeAll();
+                        
+                        JButton back = new JButton("Go Back");
+                        back.addActionListener(goHome);
+                        add(back);
+                        revalidate();
+                        repaint();
+                    }
+                }
+        );
+        revalidate();
+
+        repaint();
     }
 
-    );
-    internet.addActionListener ( 
-        new ActionListener() {
+    ActionListener goHome = new ActionListener() {
 
-            @Override
-        public void actionPerformed
-        (ActionEvent e
-        
-            ) {
-                mouseApp.internetConnection();
-            getContentPane().removeAll();
-            revalidate();
-            repaint();
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            mouseApp.closeAll();
+            createUI();
         }
-    }
-
-);
-    }
-
+    };
 //    @Override
 //    public void paint(Graphics g) {
 //        super.paint(g); //To change body of generated methods, choose Tools | Templates.
@@ -105,7 +128,4 @@ public class Fr extends JFrame {
 //g2d.scale((double)getWidth()/bf.getWidth(),(double)getHeight()/bf.getHeight());
 //g2d.drawImage(getComputerScreenshot(), null, 0, 0);
 //    }
-
-   
-
 }

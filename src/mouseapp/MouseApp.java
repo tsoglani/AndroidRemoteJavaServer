@@ -49,6 +49,8 @@ public class MouseApp {
     private ServerSocket ss;
     private PrintWriter pw;
     private static Socket s;
+    private StreamConnection connection = null;
+    private BufferedReader br;
 
     public MouseApp() {
 
@@ -98,26 +100,54 @@ public class MouseApp {
         return list;
     }
 
-    private void closeAll() {
+    protected void closeAll() {
         try {
-            pw.close();
-            s.close();
-            ss.close();
+            if (br != null) {
+                br.close();
+                br=null;
+            }
+            if (pw != null) {
+                pw.close();
+                pw=null;
+            }
+            if (s != null) {
+                s.close();
+                s=null;
+            }
+            if (ss != null) {
+                ss.close();
+                ss=null;
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
             //    fr.createUI();
 
         }
+        try {
+            if (br != null) {
+                br.close();
+                br=null;
+            }
+            if (connection != null) {
+                connection.close();
+                connection=null;
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            //    fr.createUI();
+
+        }
+        System.gc();
     }
 
     public void receiver(Socket s) {
         try {
             try {
-                BufferedReader br = new BufferedReader(new InputStreamReader(s.getInputStream()));
+                br = new BufferedReader(new InputStreamReader(s.getInputStream()));
                 while (true) {
-                    Thread.sleep(100);
+                    Thread.sleep(10);
                     String line = br.readLine();
-                //    System.out.println(line);
+                    //    System.out.println(line);
                     processString(line);
                 }
             } catch (Exception ex) {
@@ -138,8 +168,9 @@ public class MouseApp {
 
                 while (true) {
                     Thread.sleep(10);
+                    this.br = br;
                     String line = br.readLine();
-                //    System.out.println(line);
+                    //    System.out.println(line);
                     processString(line);
                 }
             } catch (Exception ex) {
@@ -211,7 +242,7 @@ public class MouseApp {
                     try {
                         OutputStream out = s.getOutputStream();
                         writeJPG(getComputerScreenshot(), out, 0.2f);
-               // ImageIO.write(getComputerScreenshot(), "PNG", out);
+                        // ImageIO.write(getComputerScreenshot(), "PNG", out);
                         //  out.close();
                     } catch (Exception ex) {
                         ex.printStackTrace();
@@ -274,7 +305,7 @@ public class MouseApp {
 //create an instance of this class
 //display local device address and name
             LocalDevice localDevice = LocalDevice.getLocalDevice();
-         //   System.out.println("Address: " + localDevice.getBluetoothAddress());
+            //   System.out.println("Address: " + localDevice.getBluetoothAddress());
             // System.out.println("Name: " + localDevice.getFriendlyName());
 
 //find devices
@@ -357,7 +388,6 @@ public class MouseApp {
 
         }
     }//end 
-    StreamConnection connection = null;
 
     void openBT() throws IOException {
         LocalDevice local = null;
@@ -390,7 +420,7 @@ public class MouseApp {
                     public void run() {
 
                         try {
-                            BufferedReader br = new BufferedReader(new InputStreamReader(connection.openInputStream(), "UTF-8"));
+                            br = new BufferedReader(new InputStreamReader(connection.openInputStream(), "UTF-8"));
                             receiver(br);
                         } catch (Exception ex) {
                             Logger.getLogger(MouseApp.class.getName()).log(Level.SEVERE, null, ex);
