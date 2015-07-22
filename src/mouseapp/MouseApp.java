@@ -115,9 +115,9 @@ public class MouseApp {
             try {
                 BufferedReader br = new BufferedReader(new InputStreamReader(s.getInputStream()));
                 while (true) {
-                    Thread.sleep(10);
+                    Thread.sleep(100);
                     String line = br.readLine();
-                    System.out.println(line);
+                //    System.out.println(line);
                     processString(line);
                 }
             } catch (Exception ex) {
@@ -139,7 +139,7 @@ public class MouseApp {
                 while (true) {
                     Thread.sleep(10);
                     String line = br.readLine();
-                    System.out.println(line);
+                //    System.out.println(line);
                     processString(line);
                 }
             } catch (Exception ex) {
@@ -205,15 +205,20 @@ public class MouseApp {
             robot.mouseMove(width * Integer.parseInt(values[2].replace("z:", "")) / 5000, height - height * Integer.parseInt(values[1].replace("y:", "")) / 5000);
 
         } else if (line.equalsIgnoreCase("SCREENSHOT") && s != null) {
-            try {
 
-                OutputStream out = s.getOutputStream();
-                writeJPG(getComputerScreenshot(), out, 0.2f);
+            new Thread() {
+                public void run() {
+                    try {
+                        OutputStream out = s.getOutputStream();
+                        writeJPG(getComputerScreenshot(), out, 0.2f);
                // ImageIO.write(getComputerScreenshot(), "PNG", out);
-                //  out.close();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+                        //  out.close();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }.start();
+
         }
     }
 
@@ -269,8 +274,8 @@ public class MouseApp {
 //create an instance of this class
 //display local device address and name
             LocalDevice localDevice = LocalDevice.getLocalDevice();
-            System.out.println("Address: " + localDevice.getBluetoothAddress());
-            System.out.println("Name: " + localDevice.getFriendlyName());
+         //   System.out.println("Address: " + localDevice.getBluetoothAddress());
+            // System.out.println("Name: " + localDevice.getFriendlyName());
 
 //find devices
             DiscoveryAgent agent = localDevice.getDiscoveryAgent();

@@ -5,24 +5,12 @@
  */
 package mouseapp;
 
-import java.awt.AWTException;
 import java.awt.FlowLayout;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.Robot;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 
 /**
  *
@@ -55,6 +43,8 @@ public class Fr extends JFrame {
                 getContentPane().removeAll();
                 try {
                     mouseApp.openBT();
+                    revalidate();
+                    repaint();
                 } catch (IOException ex) {
                     ex.printStackTrace();
                 }
