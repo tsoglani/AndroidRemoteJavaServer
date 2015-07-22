@@ -156,6 +156,7 @@ public class MouseApp {
                     String line = br.readLine();
                     //    System.out.println(line);
                     processString(line);
+                    
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -176,6 +177,7 @@ public class MouseApp {
                 while (runConnetions) {
                     Thread.sleep(10); 
                     String line = br.readLine();
+                    
                     //    System.out.println(line);
                     processString(line);
                 }
@@ -275,6 +277,8 @@ public class MouseApp {
         IIOImage iioimage = new IIOImage(bufferedImage, null, null);
         imageWriter.write(null, iioimage, imageWriteParam);
         imageOutputStream.flush();
+        outputStream.flush();
+        
     }
 
     public static BufferedImage getComputerScreenshot() {

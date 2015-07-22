@@ -13,123 +13,101 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 
 /**
- *
+ * 
  * @author gaitanesnikos
  */
 public class Fr extends JFrame {
 
-    private MouseApp mouseApp = new MouseApp();
+	private MouseApp mouseApp = new MouseApp();
 
-    public Fr() {
+	public Fr() {
 
-        createUI();
-        setSize(300, 300);
-        setVisible(true);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+		createUI();
+		setSize(300, 300);
+		setVisible(true);
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-    }
+	}
 
-    public void createUI() {
-        getContentPane().removeAll();
-        setLayout(new FlowLayout());
-        JButton bluetooth = new JButton("Bluetooth");
-        JButton internet = new JButton("Internet");
-        add(bluetooth);
-        add(internet);
-        bluetooth.addActionListener(new ActionListener() {
+	public void createUI() {
+		getContentPane().removeAll();
+		setLayout(new FlowLayout());
+		JButton bluetooth = new JButton("Bluetooth");
+		JButton internet = new JButton("Internet");
+		add(bluetooth);
+		add(internet);
+		bluetooth.addActionListener(new ActionListener() {
 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                getContentPane().removeAll();
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				
+				
+				new Thread() {
 
-                revalidate();
-                repaint();
-                JButton back = new JButton("Go Back");
-                back.addActionListener(goHome);
-                add(back);
-                new Thread() {
+					@Override
+					public void run() {
+						try {
+						
+							getContentPane().removeAll();	
+							JButton back = new JButton("Go Back");
+							back.addActionListener(goHome);
+							add(back);
+							revalidate();
+							repaint();
+							MouseApp.runConnetions = true;
+							mouseApp.openBT();
+							revalidate();
+							repaint();
+						} catch (IOException ex) {
+							ex.printStackTrace();
+						}
 
-                    @Override
-                    public void run() {
-                        try {
-                        	 MouseApp.runConnetions=true;
-                            mouseApp.openBT();
-                        } catch (IOException ex) {
-                            ex.printStackTrace();
-                        }
+					}
 
-                    }
+				}.start();
 
-                }.start();
+				revalidate();
 
-                //  }
-//                ArrayList<String> list = mouseApp.bluetoothConnection();
-//                //  if (list.size() <= 0) {
-//                System.out.println("No devices");
-//               //     return;
-//                //  }
-//                JComboBox combo = new JComboBox(list.toArray());
-//                JLabel label = new JLabel("Bluetooth Devices :");
-//                add(label);
-//                add(combo);
-//                JButton connect = new JButton("Activate Server ");
-//                add(connect);
-//                connect.addActionListener(new ActionListener() {
-//
-//                    @Override
-//                    public void actionPerformed(ActionEvent e) {
-//                        try {
-//                            mouseApp.openBT();
-//                        } catch (IOException ex) {
-//                            ex.printStackTrace();
-//                        }
-//                    }
-//                });
-                revalidate();
+				repaint();
+			}
+		});
+		internet.addActionListener(new ActionListener() {
 
-                repaint();
-            }
-        }
-        );
-        internet.addActionListener(
-                new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				MouseApp.runConnetions = true;
+				mouseApp.internetConnection();
+				getContentPane().removeAll();
 
-                    @Override
-                    public void actionPerformed(ActionEvent e
-                    ) {
-                        MouseApp.runConnetions=true;
-                        mouseApp.internetConnection();
-                        getContentPane().removeAll();
-           
-                        JButton back = new JButton("Go Back");
-                        back.addActionListener(goHome);
-                        add(back);
-                        revalidate();
-                        repaint();
-                    }
-                }
-        );
-        revalidate();
+				JButton back = new JButton("Go Back");
+				back.addActionListener(goHome);
+				add(back);
+				revalidate();
+				repaint();
+			}
+		});
+		revalidate();
 
-        repaint();
-    }
+		repaint();
+	}
 
-    ActionListener goHome = new ActionListener() {
+	ActionListener goHome = new ActionListener() {
 
-        @Override
-        public void actionPerformed(ActionEvent e) {
-        	 MouseApp.runConnetions=false;
-        	mouseApp.closeAll();
-           
-            createUI();
-        }
-    };
-//    @Override
-//    public void paint(Graphics g) {
-//        super.paint(g); //To change body of generated methods, choose Tools | Templates.
-//Graphics2D g2d=(Graphics2D) g;
-//BufferedImage bf=getComputerScreenshot();
-//g2d.scale((double)getWidth()/bf.getWidth(),(double)getHeight()/bf.getHeight());
-//g2d.drawImage(getComputerScreenshot(), null, 0, 0);
-//    }
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			MouseApp.runConnetions = false;
+			mouseApp.closeAll();
+
+			createUI();
+		}
+	};
+	// @Override
+	// public void paint(Graphics g) {
+	// super.paint(g); //To change body of generated methods, choose Tools |
+	// Templates.
+	// Graphics2D g2d=(Graphics2D) g;
+	// BufferedImage bf=getComputerScreenshot();
+	// g2d.scale((double)getWidth()/bf.getWidth(),(double)getHeight()/bf.getHeight());
+	// g2d.drawImage(getComputerScreenshot(), null, 0, 0);
+	// }
 }
