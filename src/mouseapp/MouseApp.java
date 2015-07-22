@@ -150,6 +150,9 @@ public class MouseApp {
                     Thread.sleep(10);
                     String line = br.readLine();
                     //    System.out.println(line);
+                    if(!runConnetions){
+                    	break;
+                    }
                     processString(line);
                 }
             } catch (Exception ex) {
@@ -172,6 +175,9 @@ public class MouseApp {
                     Thread.sleep(10);
                     this.br = br;
                     String line = br.readLine();
+                    if(!runConnetions){
+                    	break;
+                    }
                     //    System.out.println(line);
                     processString(line);
                 }
