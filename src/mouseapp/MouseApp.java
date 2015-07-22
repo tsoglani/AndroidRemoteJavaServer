@@ -102,7 +102,7 @@ public class MouseApp {
     }
 
     protected void closeAll() {
-    	runConnetions=false;
+    
     	try {
             if (br != null) {
                 br.close();
@@ -172,10 +172,9 @@ public class MouseApp {
     public void receiver(BufferedReader br) {
         try {
             try {
-
+            	 this.br = br;
                 while (runConnetions) {
-                    Thread.sleep(10);
-                    this.br = br;
+                    Thread.sleep(10); 
                     String line = br.readLine();
                     //    System.out.println(line);
                     processString(line);
@@ -189,8 +188,8 @@ public class MouseApp {
             try {
                 openBT();
             } catch (IOException ex) {
-                Logger.getLogger(MouseApp.class.getName()).log(Level.SEVERE, null, ex);
-            }
+             ex.printStackTrace();
+             }
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }

@@ -118,8 +118,9 @@ public class Fr extends JFrame {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            mouseApp.closeAll();
-            MouseApp.runConnetions=false;
+        	 MouseApp.runConnetions=false;
+        	mouseApp.closeAll();
+           
             createUI();
         }
     };
