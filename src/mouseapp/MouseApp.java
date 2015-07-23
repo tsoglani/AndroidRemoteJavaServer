@@ -3,6 +3,7 @@ package mouseapp;
 import java.awt.AWTException;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.MouseInfo;
 import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.Toolkit;
@@ -82,8 +83,11 @@ public class MouseApp {
 
                         }
                     }.start();
+                }catch(java.net.BindException ex){
+                	System.exit(1);
                 } catch (Exception ex) {
                     ex.printStackTrace();
+                   
                 }
             }
 
@@ -233,7 +237,21 @@ public class MouseApp {
         } else if (line.equals("RIGHT_CLICK")) {
             robot.mousePress(InputEvent.BUTTON3_MASK);
             robot.mouseRelease(InputEvent.BUTTON3_MASK);
-        } else if (line.startsWith("x:")) {
+        } else if (line.startsWith("Motion:")) {
+        	line=	line.replace("Motion:", "");
+        	 String[] values = line.split("@@");
+             GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+             int width = MouseInfo.getPointerInfo().getLocation().x;
+             int height = MouseInfo.getPointerInfo().getLocation().y;
+             System.out.println(line);
+             int moveHeight=Integer.parseInt(values[1].replace("y:", ""));
+             if(moveHeight==0){
+            	 moveHeight=Integer.parseInt(values[0].replace("x:", ""));
+             }
+             robot.mouseMove(width + Integer.parseInt(values[2].replace("z:", "")) ,  height- moveHeight);
+
+        	
+        }else if (line.startsWith("x:")) {
 
             //z==x
             //x==y
@@ -252,6 +270,7 @@ public class MouseApp {
                         writeJPG(getComputerScreenshot(), out, 0.2f);
                         // ImageIO.write(getComputerScreenshot(), "PNG", out);
                         //  out.close();
+                        out.flush();
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }

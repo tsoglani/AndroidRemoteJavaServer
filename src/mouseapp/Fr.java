@@ -47,14 +47,13 @@ public class Fr extends JFrame {
 					@Override
 					public void run() {
 						try {
-						
+							MouseApp.runConnetions = true;
 							getContentPane().removeAll();	
 							JButton back = new JButton("Go Back");
 							back.addActionListener(goHome);
 							add(back);
 							revalidate();
 							repaint();
-							MouseApp.runConnetions = true;
 							mouseApp.openBT();
 							revalidate();
 							repaint();
