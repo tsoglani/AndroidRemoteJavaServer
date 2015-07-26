@@ -67,6 +67,7 @@ public class MouseApp {
             @Override
             public void run() {
                 try {
+                	
                     // while (true) {
                     System.out.println("waiting ..");
                     ss = new ServerSocket(port);
@@ -162,13 +163,16 @@ public class MouseApp {
                     processString(line);
                     
                 }
-            } catch (Exception ex) {
+            } catch(java.net.SocketException e){
+            	runConnetions=false;
+            	fr.createUI();
+            }catch (Exception ex) {
                 ex.printStackTrace();
 
             }
             closeAll();
             Thread.sleep(1000);
-            internetConnection();
+           // internetConnection();
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
@@ -203,6 +207,9 @@ public class MouseApp {
 
     public static void processString(String line) throws AWTException {
         Robot robot = new Robot();
+        if(line==null){
+        	return;
+        }
         if (line.startsWith("keyboard")) {
             String symbol = line.replace("keyboard:", "");
             switch (symbol) {
@@ -261,7 +268,7 @@ public class MouseApp {
             int height = gd.getDisplayMode().getHeight();
             robot.mouseMove(width * Integer.parseInt(values[2].replace("z:", "")) / 5000, height - height * Integer.parseInt(values[1].replace("y:", "")) / 5000);
 
-        } else if (line.equalsIgnoreCase("SCREENSHOT") && s != null) {
+        } else if (line.equalsIgnoreCase("SCREENSHOT") && s != null&&!s.isClosed()) {
 
             new Thread() {
                 public void run() {
@@ -433,6 +440,7 @@ public class MouseApp {
             notifier = (StreamConnectionNotifier) Connector.open(url);
         } catch (Exception e) {
             e.printStackTrace();
+            fr.createUI();
             return;
         }
         // waiting for connection
