@@ -241,6 +241,10 @@ public class MouseApp {
         } else if (line.endsWith("LEFT_CLICK")) {
             robot.mousePress(InputEvent.BUTTON1_MASK);
             robot.mouseRelease(InputEvent.BUTTON1_MASK);
+        } else if (line.endsWith("LEFT_CLICK_UP")) {
+            robot.mouseRelease(InputEvent.BUTTON1_MASK);
+        } else if (line.endsWith("LEFT_CLICK_DOWN")) {
+            robot.mousePress(InputEvent.BUTTON1_MASK);
         } else if (line.equals("RIGHT_CLICK")) {
             robot.mousePress(InputEvent.BUTTON3_MASK);
             robot.mouseRelease(InputEvent.BUTTON3_MASK);
