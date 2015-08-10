@@ -13,8 +13,10 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URL;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -23,7 +25,6 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.bluetooth.DeviceClass;
-
 import javax.bluetooth.DiscoveryAgent;
 import javax.bluetooth.DiscoveryListener;
 import javax.bluetooth.LocalDevice;
@@ -68,6 +69,7 @@ public class MouseApp {
             public void run() {
                 try {
                 	
+                
                     // while (true) {
                     System.out.println("waiting ..");
                     ss = new ServerSocket(port);
@@ -85,6 +87,8 @@ public class MouseApp {
                         }
                     }.start();
                 }catch(java.net.BindException ex){
+
+         		   ex.printStackTrace();
                 	System.exit(1);
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -101,7 +105,7 @@ public class MouseApp {
             BluetoothDeviceDiscovery bl = new BluetoothDeviceDiscovery();
             list = bl.getNames();
         } catch (IOException ex) {
-            Logger.getLogger(MouseApp.class.getName()).log(Level.SEVERE, null, ex);
+ 		   ex.printStackTrace();
         }
         return list;
     }
@@ -134,7 +138,9 @@ public class MouseApp {
            if(notifier!=null){
         	   try {
         	   notifier.close();
-        	   }catch(Exception e){}
+        	   }catch(Exception e){
+        		   e.printStackTrace();
+        	   }
         	   }
             if (connection != null) {
                 connection.close();
@@ -164,9 +170,14 @@ public class MouseApp {
                     
                 }
             } catch(java.net.SocketException e){
+
+     		   e.printStackTrace();
             	runConnetions=false;
             	fr.createUI();
             }catch (Exception ex) {
+            	ex.printStackTrace();
+            	runConnetions=false;
+            	fr.createUI();
                 ex.printStackTrace();
 
             }
@@ -175,6 +186,9 @@ public class MouseApp {
            // internetConnection();
         } catch (InterruptedException ex) {
             ex.printStackTrace();
+            ex.printStackTrace();
+        	runConnetions=false;
+        	fr.createUI();
         }
     }
 
@@ -231,6 +245,15 @@ public class MouseApp {
                     robot.keyRelease(KeyEvent.VK_TAB);
 
                     break;
+                case "DOWN":
+                    robot.keyPress(KeyEvent.VK_DOWN);
+                    robot.keyRelease(KeyEvent.VK_DOWN);
+
+                    break; case "UP":
+                        robot.keyPress(KeyEvent.VK_UP);
+                        robot.keyRelease(KeyEvent.VK_UP);
+
+                        break;
 
                 default:
                     robot.keyPress(KeyEvent.getExtendedKeyCodeForChar(symbol.charAt(0)));
@@ -248,6 +271,10 @@ public class MouseApp {
         } else if (line.equals("RIGHT_CLICK")) {
             robot.mousePress(InputEvent.BUTTON3_MASK);
             robot.mouseRelease(InputEvent.BUTTON3_MASK);
+        } else if (line.endsWith("SCROLL_DOWN")) {
+            robot.mouseWheel(1);
+        } else if (line.endsWith("SCROLL_UP")) {
+        	   robot.mouseWheel(-1);
         } else if (line.startsWith("Motion:")) {
         	line=	line.replace("Motion:", "");
         	 String[] values = line.split("@@");
@@ -317,7 +344,7 @@ public class MouseApp {
         try {
             capture = new Robot().createScreenCapture(screenRect);
         } catch (AWTException ex) {
-            Logger.getLogger(Fr.class.getName()).log(Level.SEVERE, null, ex);
+ 		   ex.printStackTrace();
         }
         return capture;
     }
@@ -464,7 +491,7 @@ public class MouseApp {
                             br = new BufferedReader(new InputStreamReader(connection.openInputStream(), "UTF-8"));
                             receiver(br);
                         } catch (Exception ex) {
-                            Logger.getLogger(MouseApp.class.getName()).log(Level.SEVERE, null, ex);
+                 		   ex.printStackTrace();
                         }
 
                     }

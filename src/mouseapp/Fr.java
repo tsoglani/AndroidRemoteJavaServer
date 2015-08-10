@@ -8,9 +8,16 @@ package mouseapp;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 
 /**
  * 
@@ -31,11 +38,15 @@ public class Fr extends JFrame {
 
 	public void createUI() {
 		getContentPane().removeAll();
+		
+
 		setLayout(new FlowLayout());
 		JButton bluetooth = new JButton("Bluetooth");
-		JButton internet = new JButton("Internet");
+		JButton wlan = new JButton("WLAN");
 		add(bluetooth);
-		add(internet);
+		add(wlan);
+		
+		
 		bluetooth.addActionListener(new ActionListener() {
 
 			@Override
@@ -70,7 +81,8 @@ public class Fr extends JFrame {
 				repaint();
 			}
 		});
-		internet.addActionListener(new ActionListener() {
+		
+		wlan.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -80,7 +92,20 @@ public class Fr extends JFrame {
 
 				JButton back = new JButton("Go Back");
 				back.addActionListener(goHome);
+				
 				add(back);
+				URL whatismyip;
+				try {
+					whatismyip = new URL("http://checkip.amazonaws.com");
+			    	BufferedReader in = new BufferedReader(new InputStreamReader( whatismyip.openStream()));
+			    	String ip = in.readLine(); //you get the IP as a String
+			    JTextField exIP= new JTextField("your public ip is "+ip);
+			    exIP.setEditable(false);
+			    add(exIP);
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 				revalidate();
 				repaint();
 			}
