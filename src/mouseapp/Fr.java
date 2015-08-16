@@ -168,13 +168,11 @@ public class Fr extends JFrame {
 						}
 					});
 					JTextArea exIP = new JTextArea();
-
-					exIP.setText("your public ip is " + ip
-							+ "\nYour local Ip is one of theese: ");
-					System.out.println("Your Host addr: "
-							+ InetAddress.getLocalHost().getHostAddress()); // often
-																			// returns
-																			// "127.0.0.1"
+				
+					exIP.setText("----------Information for INTERNET connection (with public/External Ip, NOT WLAN) ----- ");
+					exIP.append("\n1)Your public ip is " + ip+" (need to parse it in your android Device)"
+							+ "\n2)Your local Ip might be one of theese: ");
+					
 					Enumeration<NetworkInterface> n = NetworkInterface
 							.getNetworkInterfaces();
 					int counter = 0;
@@ -194,12 +192,11 @@ public class Fr extends JFrame {
 								
 							}
 
-							System.out.println(addr.isSiteLocalAddress() + "  "
-									+ addr.getHostAddress());
 						}
 					}
 					exIP.setEditable(false);
-					exIP.append("\n For internet connection with public-external Ip  edid your router's preferences (needs port forwarding) \n example -> \nhttps://raw.githubusercontent.com/tsoglani/AndroidRemoteJavaServer/master/Internet%20Image%20Example/Screenshot%202.png ");
+					exIP.append("\n if there is not one of them , run \"ipconfig\" (Windows) or \"ifconfig\"(Linux) on command line to see local IP address \n(will use it for port forwarding). \n\n 3) Edit your router's preferences (port forwarding)  " +
+							"example -> \nhttps://raw.githubusercontent.com/tsoglani/AndroidRemoteJavaServer/master/Internet%20Image%20Example/Screenshot%202.png ");
 					add(exIP);
 					setSize(900, 300);
 				} catch (Exception e1) {
