@@ -5,6 +5,7 @@
  */
 package mouseapp;
 
+import java.awt.BorderLayout;
 import java.awt.Checkbox;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
@@ -14,14 +15,20 @@ import java.awt.event.ItemListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.NetworkInterface;
 import java.net.URL;
+import java.util.Enumeration;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -33,11 +40,12 @@ import javax.swing.event.ChangeListener;
 public class Fr extends JFrame {
 
 	private MouseApp mouseApp = new MouseApp();
-public static boolean isNotClosing=false;
+	public static boolean isNotClosing = false;
+
 	public Fr() {
 
 		createUI();
-	
+
 		setVisible(true);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 
@@ -46,12 +54,45 @@ public static boolean isNotClosing=false;
 	public void createUI() {
 		getContentPane().removeAll();
 		setSize(300, 300);
-		setLayout(new FlowLayout());
+		JPanel Jpanel = new JPanel();
+
 		JButton bluetooth = new JButton("Bluetooth");
 		JButton wlan = new JButton("WLAN-Internet");
-		add(bluetooth);
-		add(wlan);
+		JButton inf0 = new JButton("Info");
 
+		Jpanel.add(bluetooth);
+		Jpanel.add(wlan);
+		add(Jpanel);
+		add(inf0, BorderLayout.AFTER_LAST_LINE);
+		inf0.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				JOptionPane
+						.showMessageDialog(
+								Fr.this,
+								"  This application makes possible to control your computer's Device from your mobile phone, you are able to move your mouse from your android device.\n"
+										+ "works via Wifi (Wlan-Hotspot) or Bluetooth, you have to choose the type of connection you want to use(Wlan, bluetooth)."
+										+ " -Parameters for Wlan connection :\n"
+										+ "1) The computer must share a local network.\n"
+										+ "2) The android device must be connected to the computer's network.\n"
+										+ "\n"
+										+
+
+										"-Parameters for Bluetooth connection :\n"
+										+ "1) You must have already done the connection (You must have the computer on my devices before use it).\n"
+										+ "2) Much more slower than network connection and needs time to connect (so, not recommended).\n"
+										+
+
+										" -Parameters for Internet connection (from another network):\n"
+										+ "1) You have to change your router's preferences  .\n"
+										+ "GOTO : Router(might need to press this 192.168.1.1 on your Browser )->Nat ->Virtual Server -> Lan ip Address = your pc local address->Lan port=2000, public port=2000 "
+										+ "\n2) Example -> https://raw.githubusercontent.com/tsoglani/AndroidRemoteJavaServer/master/Internet%20Image%20Example/Screenshot%202.png "
+										+ "\n"
+										+ "\n"
+										+ "\n\n Directed By Tsoglani");
+			}
+		});
 		bluetooth.addActionListener(new ActionListener() {
 
 			@Override
@@ -93,8 +134,9 @@ public static boolean isNotClosing=false;
 				MouseApp.runConnetions = true;
 				mouseApp.internetConnection();
 				getContentPane().removeAll();
-			
-				getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
+
+				getContentPane().setLayout(
+						new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
 				JButton back = new JButton("Go Back");
 				back.addActionListener(goHome);
 
@@ -105,30 +147,61 @@ public static boolean isNotClosing=false;
 					BufferedReader in = new BufferedReader(
 							new InputStreamReader(whatismyip.openStream()));
 					String ip = in.readLine(); // you get the IP as a String
-					final JCheckBox spam = new JCheckBox(
-							"Run on Backround ");
-					JLabel label= new JLabel("close ONLY when connected and disconnected from your mobile");
+					final JCheckBox spam = new JCheckBox("Run on Backround ");
+					JLabel label = new JLabel(
+							"close ONLY when connected and disconnected from your mobile");
 					spam.setToolTipText("Can be used for spying in a computer \n the \"spam\" close when exit the application in the mobile phone  ");
 					add(spam);
 					add(label);
 					spam.addItemListener(new ItemListener() {
-						
+
 						@Override
 						public void itemStateChanged(ItemEvent arg0) {
 							if (spam.isSelected()) {
 								setDefaultCloseOperation(1);
 								System.out.println("works not closing");
-								isNotClosing=true;
+								isNotClosing = true;
 							} else {
 								setDefaultCloseOperation(EXIT_ON_CLOSE);
-								isNotClosing=false;
+								isNotClosing = false;
 							}
 						}
 					});
-					JTextField exIP = new JTextField("your public ip is " + ip);
+					JTextArea exIP = new JTextArea();
+
+					exIP.setText("your public ip is " + ip
+							+ "\nYour local Ip is one of theese: ");
+					System.out.println("Your Host addr: "
+							+ InetAddress.getLocalHost().getHostAddress()); // often
+																			// returns
+																			// "127.0.0.1"
+					Enumeration<NetworkInterface> n = NetworkInterface
+							.getNetworkInterfaces();
+					int counter = 0;
+					for (; n.hasMoreElements();) {
+						NetworkInterface ee = n.nextElement();
+
+						Enumeration<InetAddress> a = ee.getInetAddresses();
+					
+						for (; a.hasMoreElements();) {
+							InetAddress addr = a.nextElement();
+							if (addr.isSiteLocalAddress()) {
+								String s = " - ";
+								if (counter++ == 0) {
+									s=" ";
+								}
+								exIP.append(s + addr.getHostAddress());
+								
+							}
+
+							System.out.println(addr.isSiteLocalAddress() + "  "
+									+ addr.getHostAddress());
+						}
+					}
 					exIP.setEditable(false);
+					exIP.append("\n For internet connection with public-external Ip  edid your router's preferences (needs port forwarding) \n example -> \nhttps://raw.githubusercontent.com/tsoglani/AndroidRemoteJavaServer/master/Internet%20Image%20Example/Screenshot%202.png ");
 					add(exIP);
-					setSize(500, 300);
+					setSize(900, 300);
 				} catch (Exception e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
