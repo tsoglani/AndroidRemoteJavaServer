@@ -103,6 +103,7 @@ public class Fr extends JFrame {
 					@Override
 					public void run() {
 						try {
+							MouseApp.size=0.000001f;
 							MouseApp.runConnetions = true;
 							getContentPane().removeAll();
 							JButton back = new JButton("Go Back");

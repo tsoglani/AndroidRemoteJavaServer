@@ -11,24 +11,18 @@ import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URL;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
 import javax.bluetooth.DeviceClass;
 import javax.bluetooth.DiscoveryAgent;
 import javax.bluetooth.DiscoveryListener;
@@ -45,7 +39,6 @@ import javax.imageio.stream.MemoryCacheImageOutputStream;
 import javax.microedition.io.Connector;
 import javax.microedition.io.StreamConnection;
 import javax.microedition.io.StreamConnectionNotifier;
-import javax.security.auth.login.Configuration;
 import javax.swing.KeyStroke;
 
 /**
@@ -62,7 +55,7 @@ public class MouseApp {
 	private BufferedReader br;
 	public static boolean runConnetions = false;
 	private StreamConnectionNotifier notifier;
-	float size = 0.2f;
+	static float size = 0.2f;
 
 	public MouseApp() {
 
@@ -86,7 +79,7 @@ public class MouseApp {
 
 					pw = new PrintWriter(s.getOutputStream(), true);
 					pw.println("works");
-					System.out.println("Acceppttt");
+					System.out.println("connected "+ s.getInetAddress());
 					new Thread() {
 
 						@Override
@@ -99,7 +92,15 @@ public class MouseApp {
 				} catch (java.net.BindException ex) {
 
 					ex.printStackTrace();
-					System.exit(1);
+					closeAll();
+					try {
+						Thread.sleep(1000);
+						internetConnection();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
 				} catch (NullPointerException ex) {
 					ex.printStackTrace();
 
@@ -193,7 +194,7 @@ public class MouseApp {
 						e.printStackTrace();
 						// runConnetions=false;
 						closeAll();
-						Thread.sleep(500);
+						Thread.sleep(1000);
 						internetConnection();
 					}
 				} catch (NullPointerException e) {
@@ -276,7 +277,6 @@ public class MouseApp {
 		}
 		if (line.startsWith("keyboard:")) {
 			String symbol = line.replace("keyboard:", "");
-			System.out.println(symbol);
 			switch (symbol) {
 			case "SPACE":
 				robot.keyPress(KeyEvent.VK_SPACE);
@@ -318,7 +318,7 @@ public class MouseApp {
 				robot.keyPress(KeyEvent.VK_SHIFT);
 				robot.keyRelease(KeyEvent.VK_SHIFT);
 				break;
-				
+
 			case "ALT+F4":
 				robot.keyPress(KeyEvent.VK_ALT);
 				robot.keyPress(KeyEvent.VK_F4);
@@ -361,22 +361,18 @@ public class MouseApp {
 							.charAt(i)));
 					robot.keyRelease(KeyEvent.getExtendedKeyCodeForChar(word
 							.charAt(i)));
-					
+
 				} catch (java.lang.IllegalArgumentException e) {
 					KeyStroke ks = KeyStroke.getKeyStroke(word.charAt(i), 0);
-					System.out.println(ks.getKeyCode());
-				
+
 					robot.keyPress(ks.getKeyCode());
 					robot.keyRelease(ks.getKeyCode());
-					System.out.println(word.charAt(i));
 				}
 			}
 		} else if (line.equalsIgnoreCase("GLOBAL_IP")) {
-			size = 0.0001f;
-			System.out.println("size= " + size);
+			size = 0.00000f;
 		} else if (line.equalsIgnoreCase("LOCAL_IP")) {
 			size = 0.1f;
-			System.out.println("size= " + size);
 		} else if (line.endsWith("LEFT_CLICK")) {
 			robot.mousePress(InputEvent.BUTTON1_MASK);
 			robot.mouseRelease(InputEvent.BUTTON1_MASK);
@@ -428,7 +424,6 @@ public class MouseApp {
 					.getLocalGraphicsEnvironment().getDefaultScreenDevice();
 			int width = MouseInfo.getPointerInfo().getLocation().x;
 			int height = MouseInfo.getPointerInfo().getLocation().y;
-			System.out.println(line);
 			int moveHeight = Integer.parseInt(values[1].replace("y:", ""));
 			if (moveHeight == 0) {
 				moveHeight = Integer.parseInt(values[0].replace("x:", ""));
@@ -455,21 +450,29 @@ public class MouseApp {
 
 		} else if (line.equalsIgnoreCase("SCREENSHOT") && s != null
 				&& !s.isClosed()) {
-
-			new Thread() {
+			if (thread!=null &&thread.isAlive()) {
+				return;
+			}
+			thread = new Thread() {
 				public void run() {
 					try {
+
 						OutputStream out = s.getOutputStream();
 						writeJPG(getComputerScreenshot(), out, size);
 						// ImageIO.write(getComputerScreenshot(), "PNG", out);
 						// out.close();
 						out.flush();
-						
-					
+
 					} catch (IOException ex) {
 						ex.printStackTrace();
 						ex.printStackTrace();
 						closeAll();
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 						internetConnection();
 						// runConnetions = false;
 						// fr.createUI();
@@ -477,6 +480,12 @@ public class MouseApp {
 						ex.printStackTrace();
 						ex.printStackTrace();
 						closeAll();
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 						internetConnection();
 						// runConnetions = false;
 						// fr.createUI();
@@ -484,15 +493,24 @@ public class MouseApp {
 						ex.printStackTrace();
 						ex.printStackTrace();
 						closeAll();
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 						internetConnection();
 						// runConnetions = false;
 						// fr.createUI();
 					}
 				}
-			}.start();
+			};
+			thread.start();
 
 		}
 	}
+
+	private Thread thread;
 
 	public static void shutdown() throws RuntimeException, IOException {
 		String shutdownCommand;
@@ -524,9 +542,9 @@ public class MouseApp {
 			ImageOutputStream imageOutputStream = new MemoryCacheImageOutputStream(
 					outputStream);
 			imageWriter.setOutput(imageOutputStream);
-		
+
 			IIOImage iioimage = new IIOImage(bufferedImage, null, null);
-		
+
 			imageWriter.write(null, iioimage, imageWriteParam);
 			imageOutputStream.flush();
 			outputStream.flush();
@@ -535,12 +553,17 @@ public class MouseApp {
 
 	}
 
-	public static BufferedImage getComputerScreenshot() {
+	private Robot robot;
+
+	public BufferedImage getComputerScreenshot() {
 		Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit()
 				.getScreenSize());
 		BufferedImage capture = null;
 		try {
-			capture = new Robot().createScreenCapture(screenRect);
+			if (robot == null) {
+				robot = new Robot();
+			}
+			capture = robot.createScreenCapture(screenRect);
 			Graphics2D graphics2D = capture.createGraphics();
 			int x = MouseInfo.getPointerInfo().getLocation().x;
 			int y = MouseInfo.getPointerInfo().getLocation().y;
@@ -548,7 +571,7 @@ public class MouseApp {
 			graphics2D.fillRect(x, y, 10, 10); // cursor.gif is 16x16 size.
 			graphics2D.setColor(Color.black);
 			graphics2D.drawRect(x, y, 10, 10);
-			
+
 		} catch (AWTException ex) {
 			ex.printStackTrace();
 		}
