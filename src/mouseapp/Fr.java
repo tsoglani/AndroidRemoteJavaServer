@@ -13,14 +13,17 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.NetworkInterface;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
 
+import javax.imageio.ImageIO;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -30,6 +33,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -41,7 +45,8 @@ public class Fr extends JFrame {
 
 	private MouseApp mouseApp = new MouseApp();
 	public static boolean isNotClosing = false;
-
+static ArrayList<String> LOCAL_ADRESSES= new ArrayList<String>();
+static String EXTERNAL_IP="";
 	public Fr() {
 
 		createUI();
@@ -55,7 +60,6 @@ public class Fr extends JFrame {
 		getContentPane().removeAll();
 		setSize(300, 300);
 		JPanel Jpanel = new JPanel();
-
 		JButton bluetooth = new JButton("Bluetooth");
 		JButton wlan = new JButton("WLAN-Internet");
 		JButton inf0 = new JButton("Info");
@@ -147,7 +151,7 @@ public class Fr extends JFrame {
 					whatismyip = new URL("http://checkip.amazonaws.com");
 					BufferedReader in = new BufferedReader(
 							new InputStreamReader(whatismyip.openStream()));
-					String ip = in.readLine(); // you get the IP as a String
+					EXTERNAL_IP= in.readLine(); // you get the IP as a String
 					final JCheckBox spam = new JCheckBox("Run on Backround ");
 					JLabel label = new JLabel(
 							"close ONLY when connected and disconnected from your mobile");
@@ -171,12 +175,13 @@ public class Fr extends JFrame {
 					JTextArea exIP = new JTextArea();
 				
 					exIP.setText("----------Information for INTERNET connection (with public/External Ip, NOT WLAN) ----- ");
-					exIP.append("\n1)Your public ip is " + ip+" (need to parse it in your android Device)"
+					exIP.append("\n1)Your public ip is " + EXTERNAL_IP+" (need to parse it in your android Device)"
 							+ "\n2)Your local Ip might be one of theese: ");
 					
 					Enumeration<NetworkInterface> n = NetworkInterface
 							.getNetworkInterfaces();
 					int counter = 0;
+					LOCAL_ADRESSES.removeAll(LOCAL_ADRESSES);
 					for (; n.hasMoreElements();) {
 						NetworkInterface ee = n.nextElement();
 
@@ -190,11 +195,12 @@ public class Fr extends JFrame {
 									s=" ";
 								}
 								exIP.append(s + addr.getHostAddress());
-								
+							LOCAL_ADRESSES.add(addr.getHostAddress());	
 							}
 
 						}
 					}
+	
 					exIP.setEditable(false);
 					exIP.append("\n if there is not one of them , run \"ipconfig\" (Windows) or \"ifconfig\"(Linux) on command line to see local IP address \n(will use it for port forwarding). \n\n 3) Edit your router's preferences (port forwarding)  " +
 							"example -> \nhttps://raw.githubusercontent.com/tsoglani/AndroidRemoteJavaServer/master/Internet%20Image%20Example/Screenshot%202.png ");

@@ -13,6 +13,9 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -47,6 +50,7 @@ import javax.swing.KeyStroke;
  */
 public class MouseApp {
 
+	private WebcamShot webCam;
 	final int port = 2000;
 	private ServerSocket ss;
 	private PrintWriter pw;
@@ -55,7 +59,7 @@ public class MouseApp {
 	private BufferedReader br;
 	public static boolean runConnetions = false;
 	private StreamConnectionNotifier notifier;
-	static float size = 0.2f;
+	static float size = 0.1f;
 
 	public MouseApp() {
 
@@ -69,6 +73,7 @@ public class MouseApp {
 
 			@Override
 			public void run() {
+
 				try {
 
 					// while (true) {
@@ -79,7 +84,7 @@ public class MouseApp {
 
 					pw = new PrintWriter(s.getOutputStream(), true);
 					pw.println("works");
-					System.out.println("connected "+ s.getInetAddress());
+					System.out.println("connected " + s.getInetAddress());
 					new Thread() {
 
 						@Override
@@ -92,14 +97,7 @@ public class MouseApp {
 				} catch (java.net.BindException ex) {
 
 					ex.printStackTrace();
-					closeAll();
-					try {
-						Thread.sleep(1000);
-						internetConnection();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+				
 
 				} catch (NullPointerException ex) {
 					ex.printStackTrace();
@@ -125,7 +123,8 @@ public class MouseApp {
 	}
 
 	protected void closeAll() {
-
+		if(webCam!=null)
+webCam.closeCamera();
 		try {
 			if (br != null) {
 				br.close();
@@ -331,6 +330,23 @@ public class MouseApp {
 				robot.keyRelease(KeyEvent.VK_DELETE);
 				break;
 
+			case "ALT+TAB":
+			
+				robot.keyPress(KeyEvent.VK_ALT);
+				robot.keyPress(KeyEvent.VK_TAB);
+				robot.keyRelease(KeyEvent.VK_TAB);
+				robot.keyRelease(KeyEvent.VK_ALT);
+				
+				break;
+			case "CRL+Z":
+			
+				robot.keyPress(KeyEvent.VK_CONTROL);
+				robot.keyPress(KeyEvent.VK_Z);
+				robot.keyRelease(KeyEvent.VK_Z);
+				robot.keyRelease(KeyEvent.VK_CONTROL);
+				
+				break;
+			
 			case "PRINT SCREEN":
 				robot.keyPress(KeyEvent.VK_PRINTSCREEN);
 				robot.keyRelease(KeyEvent.VK_PRINTSCREEN);
@@ -339,9 +355,17 @@ public class MouseApp {
 				robot.keyPress(KeyEvent.VK_ALT);
 				robot.keyPress(KeyEvent.VK_CONTROL);
 				robot.keyPress(KeyEvent.VK_DELETE);
-				robot.keyRelease(KeyEvent.VK_DELETE);
-				robot.keyRelease(KeyEvent.VK_CONTROL);
+				try {
+					Thread.sleep(20);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				robot.keyRelease(KeyEvent.VK_ALT);
+				robot.keyRelease(KeyEvent.VK_CONTROL);
+				robot.keyRelease(KeyEvent.VK_DELETE);
+
+				
 
 				break;
 
@@ -448,9 +472,14 @@ public class MouseApp {
 							* Integer.parseInt(values[1].replace("y:", ""))
 							/ 5000);
 
+		} else if (line.equalsIgnoreCase("START_CAMERA")) {
+			webCam = new WebcamShot();
+			new Thread(webCam).start();
+			// SwingUtilities.invokeLater(webcamShot);
+
 		} else if (line.equalsIgnoreCase("SCREENSHOT") && s != null
 				&& !s.isClosed()) {
-			if (thread!=null &&thread.isAlive()) {
+			if (thread != null && thread.isAlive()) {
 				return;
 			}
 			thread = new Thread() {
@@ -507,7 +536,32 @@ public class MouseApp {
 			};
 			thread.start();
 
+		} else if (line.equalsIgnoreCase("CAM_SCREENSHOT")) {
+			OutputStream out;
+			try {
+				out = s.getOutputStream();
+				size =(size>0.1) ? 0.2f : 0.1f; 
+				writeJPG(webCam.getCameraImage(), out, size);
+				// ImageIO.write(getComputerScreenshot(), "PNG", out);
+				// out.close();
+				out.flush();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		} else if (line.equalsIgnoreCase("STOP_CAM")) {
+			webCam.closeCamera();
+			webCam = null;
 		}
+		
+		try {
+			s.getOutputStream().flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 
 	private Thread thread;
@@ -553,9 +607,9 @@ public class MouseApp {
 
 	}
 
-	private Robot robot;
+	private static Robot robot;
 
-	public BufferedImage getComputerScreenshot() {
+	public static BufferedImage getComputerScreenshot() {
 		Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit()
 				.getScreenSize());
 		BufferedImage capture = null;
@@ -581,7 +635,7 @@ public class MouseApp {
 	public static Fr fr;
 
 	public static void main(String[] args) {
-		fr = new Fr();
+		new Fr();
 	}
 
 	public class BluetoothDeviceDiscovery implements DiscoveryListener {
