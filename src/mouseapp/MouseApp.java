@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.Image;
 import java.awt.MouseInfo;
 import java.awt.Rectangle;
 import java.awt.Robot;
@@ -394,9 +395,11 @@ webCam.closeCamera();
 				}
 			}
 		} else if (line.equalsIgnoreCase("GLOBAL_IP")) {
-			size = 0.00000f;
+			size = 0.2f;
+			scWidth=620;scHeight=620;
 		} else if (line.equalsIgnoreCase("LOCAL_IP")) {
-			size = 0.1f;
+			size = 0.5f;
+			scWidth=1000;scHeight=1000;
 		} else if (line.endsWith("LEFT_CLICK")) {
 			robot.mousePress(InputEvent.BUTTON1_MASK);
 			robot.mouseRelease(InputEvent.BUTTON1_MASK);
@@ -473,10 +476,15 @@ webCam.closeCamera();
 							/ 5000);
 
 		} else if (line.equalsIgnoreCase("START_CAMERA")) {
+			try{
 			webCam = new WebcamShot();
 			new Thread(webCam).start();
 			// SwingUtilities.invokeLater(webcamShot);
-
+			}catch(Exception e){
+				e.printStackTrace();
+				if(pw!=null)
+				pw.println("NO CAMERA");
+			}
 		} else if (line.equalsIgnoreCase("SCREENSHOT") && s != null
 				&& !s.isClosed()) {
 			if (thread != null && thread.isAlive()) {
@@ -539,21 +547,31 @@ webCam.closeCamera();
 		} else if (line.equalsIgnoreCase("CAM_SCREENSHOT")) {
 			OutputStream out;
 			try {
+				if(webCam==null){
+					return;
+				}
 				out = s.getOutputStream();
 				size =(size>0.1) ? 0.2f : 0.1f; 
 				writeJPG(webCam.getCameraImage(), out, size);
 				// ImageIO.write(getComputerScreenshot(), "PNG", out);
 				// out.close();
 				out.flush();
-			} catch (IOException e) {
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 
 		} else if (line.equalsIgnoreCase("STOP_CAM")) {
+			if(webCam==null){
+				return;
+			}
+			try{
 			webCam.closeCamera();
 			webCam = null;
+		}catch (Exception e){
+			e.printStackTrace();
 		}
+			}
 		
 		try {
 			s.getOutputStream().flush();
@@ -608,7 +626,7 @@ webCam.closeCamera();
 	}
 
 	private static Robot robot;
-
+private static int scWidth=620,scHeight=620;
 	public static BufferedImage getComputerScreenshot() {
 		Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit()
 				.getScreenSize());
@@ -625,7 +643,14 @@ webCam.closeCamera();
 			graphics2D.fillRect(x, y, 10, 10); // cursor.gif is 16x16 size.
 			graphics2D.setColor(Color.black);
 			graphics2D.drawRect(x, y, 10, 10);
-
+			graphics2D.dispose();
+			
+		Image image=	capture.getScaledInstance(scWidth, scHeight, BufferedImage.SCALE_FAST);
+		BufferedImage bf2=new BufferedImage(scWidth, scHeight, BufferedImage.TYPE_INT_RGB);
+	Graphics2D g2d=	bf2.createGraphics();
+	g2d.drawImage(image, 0, 0,null);
+			g2d.dispose();
+			return bf2;
 		} catch (AWTException ex) {
 			ex.printStackTrace();
 		}
