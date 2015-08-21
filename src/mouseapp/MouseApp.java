@@ -43,6 +43,7 @@ import javax.imageio.stream.MemoryCacheImageOutputStream;
 import javax.microedition.io.Connector;
 import javax.microedition.io.StreamConnection;
 import javax.microedition.io.StreamConnectionNotifier;
+import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
 
 /**
@@ -54,13 +55,14 @@ public class MouseApp {
 	private WebcamShot webCam;
 	final int port = 2000;
 	private ServerSocket ss;
-	private PrintWriter pw;
+	public static PrintWriter pw;
 	private static Socket s;
 	private StreamConnection connection = null;
 	private BufferedReader br;
 	public static boolean runConnetions = false;
 	private StreamConnectionNotifier notifier;
 	static float size = 0.1f;
+	private static boolean isLoggedIn = true;
 
 	public MouseApp() {
 
@@ -98,7 +100,6 @@ public class MouseApp {
 				} catch (java.net.BindException ex) {
 
 					ex.printStackTrace();
-				
 
 				} catch (NullPointerException ex) {
 					ex.printStackTrace();
@@ -124,8 +125,8 @@ public class MouseApp {
 	}
 
 	protected void closeAll() {
-		if(webCam!=null)
-webCam.closeCamera();
+		if (webCam != null)
+			webCam.closeCamera();
 		try {
 			if (br != null) {
 				br.close();
@@ -245,6 +246,7 @@ webCam.closeCamera();
 
 	public void receiver(BufferedReader br) {
 		try {
+
 			try {
 				this.br = br;
 				while (runConnetions) {
@@ -332,22 +334,22 @@ webCam.closeCamera();
 				break;
 
 			case "ALT+TAB":
-			
+
 				robot.keyPress(KeyEvent.VK_ALT);
 				robot.keyPress(KeyEvent.VK_TAB);
 				robot.keyRelease(KeyEvent.VK_TAB);
 				robot.keyRelease(KeyEvent.VK_ALT);
-				
+
 				break;
 			case "CRL+Z":
-			
+
 				robot.keyPress(KeyEvent.VK_CONTROL);
 				robot.keyPress(KeyEvent.VK_Z);
 				robot.keyRelease(KeyEvent.VK_Z);
 				robot.keyRelease(KeyEvent.VK_CONTROL);
-				
+
 				break;
-			
+
 			case "PRINT SCREEN":
 				robot.keyPress(KeyEvent.VK_PRINTSCREEN);
 				robot.keyRelease(KeyEvent.VK_PRINTSCREEN);
@@ -365,8 +367,6 @@ webCam.closeCamera();
 				robot.keyRelease(KeyEvent.VK_ALT);
 				robot.keyRelease(KeyEvent.VK_CONTROL);
 				robot.keyRelease(KeyEvent.VK_DELETE);
-
-				
 
 				break;
 
@@ -394,12 +394,62 @@ webCam.closeCamera();
 					robot.keyRelease(ks.getKeyCode());
 				}
 			}
-		} else if (line.equalsIgnoreCase("GLOBAL_IP")) {
-			size = 0.2f;
-			scWidth=620;scHeight=620;
+		} else if (line.startsWith("GLOBAL_IP:")) {
+			size = 0.3f;
+
+			scWidth = 580;
+			scHeight = 580;
+			String userName = line.replace("GLOBAL_IP:", "");
+			try {
+				isLoggedIn = true;
+				// KindOfDatabase kod= new KindOfDatabase();
+				// String localUserName=kod.getUserName();
+				String localUserName = Fr.userName.getText();
+				if (!userName.replaceAll(" ", "").equals(
+						localUserName.replaceAll(" ", ""))) {
+					isLoggedIn = false;
+					
+					new Thread() {
+						@Override
+						public void run() {
+							try {
+								Thread.sleep(3000);
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							closeAll();
+							try {
+								Thread.sleep(1000);
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							//internetConnection();
+							//super.run();
+						}
+					}.start();
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+
+				e.printStackTrace();
+			}
+		} else if (line.startsWith("GLOBAL_IP")) {
+			isLoggedIn = true;
+			size = 0.3f;
+			scWidth = 580;
+			scHeight = 580;
+		} else if (line.equalsIgnoreCase("Bluetooth")) {
+			isLoggedIn = true;
+			size = 0.3f;
+			scWidth = 580;
+			scHeight = 580;
 		} else if (line.equalsIgnoreCase("LOCAL_IP")) {
+			isLoggedIn = true;
 			size = 0.5f;
-			scWidth=1000;scHeight=1000;
+			scWidth = 1000;
+			scHeight = 1000;
 		} else if (line.endsWith("LEFT_CLICK")) {
 			robot.mousePress(InputEvent.BUTTON1_MASK);
 			robot.mouseRelease(InputEvent.BUTTON1_MASK);
@@ -476,14 +526,12 @@ webCam.closeCamera();
 							/ 5000);
 
 		} else if (line.equalsIgnoreCase("START_CAMERA")) {
-			try{
-			webCam = new WebcamShot();
-			new Thread(webCam).start();
-			// SwingUtilities.invokeLater(webcamShot);
-			}catch(Exception e){
+			try {
+				webCam = new WebcamShot();
+				new Thread(webCam).start();
+				// SwingUtilities.invokeLater(webcamShot);
+			} catch (Exception e) {
 				e.printStackTrace();
-				if(pw!=null)
-				pw.println("NO CAMERA");
 			}
 		} else if (line.equalsIgnoreCase("SCREENSHOT") && s != null
 				&& !s.isClosed()) {
@@ -495,14 +543,17 @@ webCam.closeCamera();
 					try {
 
 						OutputStream out = s.getOutputStream();
+						if(isLoggedIn)
 						writeJPG(getComputerScreenshot(), out, size);
+						else{
+							writeJPG(getErrorImage("denied.png"), out, size);		
+						}
 						// ImageIO.write(getComputerScreenshot(), "PNG", out);
 						// out.close();
 						out.flush();
 
 					} catch (IOException ex) {
 						ex.printStackTrace();
-						ex.printStackTrace();
 						closeAll();
 						try {
 							Thread.sleep(1000);
@@ -510,12 +561,11 @@ webCam.closeCamera();
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-						internetConnection();
+					//	internetConnection();
 						// runConnetions = false;
 						// fr.createUI();
 					} catch (Exception ex) {
 						ex.printStackTrace();
-						ex.printStackTrace();
 						closeAll();
 						try {
 							Thread.sleep(1000);
@@ -523,11 +573,10 @@ webCam.closeCamera();
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-						internetConnection();
+						//internetConnection();
 						// runConnetions = false;
 						// fr.createUI();
 					} catch (Error ex) {
-						ex.printStackTrace();
 						ex.printStackTrace();
 						closeAll();
 						try {
@@ -547,39 +596,44 @@ webCam.closeCamera();
 		} else if (line.equalsIgnoreCase("CAM_SCREENSHOT")) {
 			OutputStream out;
 			try {
-				if(webCam==null){
+				if (webCam == null) {
 					return;
 				}
 				out = s.getOutputStream();
-				size =(size>0.1) ? 0.2f : 0.1f; 
+				size = (size > 0.1) ? 0.2f : 0.1f;
 				writeJPG(webCam.getCameraImage(), out, size);
 				// ImageIO.write(getComputerScreenshot(), "PNG", out);
 				// out.close();
 				out.flush();
 			} catch (Exception e) {
+
 				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (Error e) {
+				// TODO: handle exception
 				e.printStackTrace();
 			}
 
 		} else if (line.equalsIgnoreCase("STOP_CAM")) {
-			if(webCam==null){
+			if (webCam == null) {
 				return;
 			}
-			try{
-			webCam.closeCamera();
-			webCam = null;
-		}catch (Exception e){
-			e.printStackTrace();
-		}
+			try {
+				webCam.closeCamera();
+				webCam = null;
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-		
+		}
+
 		try {
+			if(s!=null)
 			s.getOutputStream().flush();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	private Thread thread;
@@ -626,11 +680,13 @@ webCam.closeCamera();
 	}
 
 	private static Robot robot;
-private static int scWidth=620,scHeight=620;
+	private static int scWidth = 1000, scHeight = 1000;
+
 	public static BufferedImage getComputerScreenshot() {
 		Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit()
 				.getScreenSize());
 		BufferedImage capture = null;
+
 		try {
 			if (robot == null) {
 				robot = new Robot();
@@ -644,17 +700,31 @@ private static int scWidth=620,scHeight=620;
 			graphics2D.setColor(Color.black);
 			graphics2D.drawRect(x, y, 10, 10);
 			graphics2D.dispose();
-			
-		Image image=	capture.getScaledInstance(scWidth, scHeight, BufferedImage.SCALE_FAST);
-		BufferedImage bf2=new BufferedImage(scWidth, scHeight, BufferedImage.TYPE_INT_RGB);
-	Graphics2D g2d=	bf2.createGraphics();
-	g2d.drawImage(image, 0, 0,null);
+
+			Image image = capture.getScaledInstance(scWidth, scHeight,
+					BufferedImage.SCALE_FAST);
+			BufferedImage bf2 = new BufferedImage(scWidth, scHeight,
+					BufferedImage.TYPE_INT_RGB);
+			Graphics2D g2d = bf2.createGraphics();
+			g2d.drawImage(image, 0, 0, null);
 			g2d.dispose();
 			return bf2;
 		} catch (AWTException ex) {
 			ex.printStackTrace();
 		}
 		return capture;
+	}
+
+	public static BufferedImage getErrorImage(String file) throws IOException {
+
+		Image image = ImageIO.read(new File(file));
+		BufferedImage bf2 = new BufferedImage(scWidth+100, scHeight+100,
+				BufferedImage.TYPE_INT_RGB);
+		Graphics2D g2d = bf2.createGraphics();
+		g2d.drawImage(image, 100, 50, null);
+		g2d.dispose();
+		return bf2;
+
 	}
 
 	public static Fr fr;

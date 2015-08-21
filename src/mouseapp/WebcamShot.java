@@ -29,13 +29,17 @@ public class WebcamShot implements Runnable, WebcamListener, WindowListener,
 
 	@Override
 	public void run() {
+		try{
 		picker = new WebcamPicker();
 
 		webcam = picker.getSelectedWebcam();
 
 		if (webcam == null) {
 			System.out.println("No webcams found...");
-			System.exit(1);
+			
+MouseApp.pw.println("NO CAMERA");
+
+			return;
 		}
 
 		// webcam.setViewSize(WebcamResolution.CIF.getSize());
@@ -53,6 +57,12 @@ public class WebcamShot implements Runnable, WebcamListener, WindowListener,
 		t.setDaemon(true);
 		t.setUncaughtExceptionHandler(this);
 		t.start();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} catch (Error e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	@Override
@@ -152,4 +162,6 @@ public class WebcamShot implements Runnable, WebcamListener, WindowListener,
 	//
 	// }
 	// }
+	
+	
 }
