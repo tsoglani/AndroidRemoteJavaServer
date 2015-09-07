@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package mouseapp;
 
 import java.awt.BorderLayout;
@@ -252,7 +247,7 @@ public class Fr extends JFrame {
 					setSize(900, 300);
 				} catch (Exception e1) {
 					// TODO Auto-generated catch block
-					e1.printStackTrace();
+					//e1.printStackTrace();
 				}
 				revalidate();
 				repaint();
@@ -290,3 +285,5 @@ public class Fr extends JFrame {
 	// g2d.drawImage(getComputerScreenshot(), null, 0, 0);
 	// }
 }
+
+

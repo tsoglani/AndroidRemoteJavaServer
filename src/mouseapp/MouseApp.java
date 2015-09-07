@@ -15,14 +15,13 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
@@ -63,10 +62,7 @@ public class MouseApp {
 	private StreamConnectionNotifier notifier;
 	static float size = 0.1f;
 	private static boolean isLoggedIn = true;
-
-	public MouseApp() {
-
-	}
+	private Audio audioController;
 
 	/**
 	 * enables internet connection
@@ -125,6 +121,7 @@ public class MouseApp {
 	}
 
 	protected void closeAll() {
+		percentZoom = 100;
 		if (webCam != null)
 			webCam.closeCamera();
 		try {
@@ -316,16 +313,116 @@ public class MouseApp {
 				robot.keyPress(KeyEvent.VK_LEFT);
 				robot.keyRelease(KeyEvent.VK_LEFT);
 				break;
-			case "SHIFT":
+			case "SHIFT_START":
 				robot.keyPress(KeyEvent.VK_SHIFT);
+				break;
+			case "SHIFT_STOP":
 				robot.keyRelease(KeyEvent.VK_SHIFT);
 				break;
 
+			case "VOL. ++":
+				switch (ostype) {
+				case Windows:
+					robot.keyPress(KeyEvent.VK_CONTROL);
+					robot.keyPress(KeyEvent.VK_ALT);
+					robot.keyPress(KeyEvent.VK_UP);
+					robot.keyRelease(KeyEvent.VK_UP);
+					robot.keyRelease(KeyEvent.VK_ALT);
+					robot.keyRelease(KeyEvent.VK_CONTROL);
+					break;
+
+				default:
+
+					try {
+
+						Audio.setMasterOutputVolume(Audio
+								.getMasterOutputVolume() + 0.05f);
+					} catch (Exception e) {
+					}
+					break;
+				}
+				break;
+		
+				
+				
+			case "VOL. --":
+				
+				switch (ostype) {
+				case Windows:
+					
+					robot.keyPress(KeyEvent.VK_CONTROL);
+					robot.keyPress(KeyEvent.VK_ALT);
+					robot.keyPress(KeyEvent.VK_DOWN);
+					robot.keyRelease(KeyEvent.VK_DOWN);
+					robot.keyRelease(KeyEvent.VK_ALT);
+					robot.keyRelease(KeyEvent.VK_CONTROL);
+					break;
+
+				default:
+
+					try {
+
+						Audio.setMasterOutputVolume(Audio
+								.getMasterOutputVolume() - 0.05f);
+					} catch (Exception e) {
+					}
+					break;
+				}
+				break;
 			case "ALT+F4":
 				robot.keyPress(KeyEvent.VK_ALT);
 				robot.keyPress(KeyEvent.VK_F4);
 				robot.keyRelease(KeyEvent.VK_F4);
 				robot.keyRelease(KeyEvent.VK_ALT);
+				break;
+			case "ESC":
+				robot.keyPress(KeyEvent.VK_ESCAPE);
+				robot.keyRelease(KeyEvent.VK_ESCAPE);
+				break;
+			case "MIN.":
+			case "MINIMIZE":
+
+				switch (ostype) {
+
+				case MacOS:
+					robot.keyPress(KeyEvent.VK_META);
+					robot.keyPress(KeyEvent.VK_M);
+
+					robot.keyRelease(KeyEvent.VK_M);
+					robot.keyRelease(KeyEvent.VK_META);
+					break;
+				case Windows:
+
+					robot.keyPress(KeyEvent.VK_ALT);
+					robot.keyPress(KeyEvent.VK_SPACE);
+					robot.keyRelease(KeyEvent.VK_ALT);
+					robot.keyRelease(KeyEvent.VK_SPACE);
+
+					try {
+						Thread.sleep(200);
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					robot.keyPress(KeyEvent.VK_N);
+
+					robot.keyRelease(KeyEvent.VK_N);
+					break;
+				case Linux:
+
+					robot.keyPress(KeyEvent.VK_CONTROL);
+					robot.keyPress(KeyEvent.VK_ALT);
+					robot.keyPress(KeyEvent.VK_NUMPAD0);
+					robot.keyRelease(KeyEvent.VK_NUMPAD0);
+					robot.keyRelease(KeyEvent.VK_ALT);
+					robot.keyRelease(KeyEvent.VK_CONTROL);
+
+					break;
+				case Other:
+
+					break;
+				}
+
 				break;
 
 			case "DELETE":
@@ -333,13 +430,24 @@ public class MouseApp {
 				robot.keyRelease(KeyEvent.VK_DELETE);
 				break;
 
-			case "ALT+TAB":
+			case "ALT_START":
 
 				robot.keyPress(KeyEvent.VK_ALT);
-				robot.keyPress(KeyEvent.VK_TAB);
-				robot.keyRelease(KeyEvent.VK_TAB);
-				robot.keyRelease(KeyEvent.VK_ALT);
 
+				break;
+
+			case "CTRL_START":
+
+				robot.keyPress(KeyEvent.VK_CONTROL);
+
+				break;
+			case "CTRL_STOP":
+
+				robot.keyRelease(KeyEvent.VK_CONTROL);
+
+				break;
+			case "ALT_STOP":
+				robot.keyRelease(KeyEvent.VK_ALT);
 				break;
 			case "CRL+Z":
 
@@ -349,14 +457,71 @@ public class MouseApp {
 				robot.keyRelease(KeyEvent.VK_CONTROL);
 
 				break;
-
+			case "PRT SCR":
 			case "PRINT SCREEN":
 				robot.keyPress(KeyEvent.VK_PRINTSCREEN);
 				robot.keyRelease(KeyEvent.VK_PRINTSCREEN);
 				break;
+
+			case "F1":
+				robot.keyPress(KeyEvent.VK_F1);
+				robot.keyRelease(KeyEvent.VK_F1);
+				break;
+			case "F2":
+				robot.keyPress(KeyEvent.VK_F2);
+				robot.keyRelease(KeyEvent.VK_F2);
+				break;
+			case "F3":
+				robot.keyPress(KeyEvent.VK_F3);
+				robot.keyRelease(KeyEvent.VK_F3);
+				break;
+			case "F4":
+				robot.keyPress(KeyEvent.VK_F4);
+				robot.keyRelease(KeyEvent.VK_F4);
+				break;
+			case "F5":
+				robot.keyPress(KeyEvent.VK_F5);
+				robot.keyRelease(KeyEvent.VK_F5);
+				break;
+			case "F6":
+				robot.keyPress(KeyEvent.VK_F6);
+				robot.keyRelease(KeyEvent.VK_F6);
+				break;
+
+			case "F7":
+				robot.keyPress(KeyEvent.VK_F7);
+				robot.keyRelease(KeyEvent.VK_F7);
+				break;
+			case "F8":
+				robot.keyPress(KeyEvent.VK_F8);
+				robot.keyRelease(KeyEvent.VK_F8);
+				break;
+			case "F9":
+				robot.keyPress(KeyEvent.VK_F9);
+				robot.keyRelease(KeyEvent.VK_F9);
+				break;
+			case "F10":
+				robot.keyPress(KeyEvent.VK_F10);
+				robot.keyRelease(KeyEvent.VK_F10);
+				break;
+			case "F11":
+				robot.keyPress(KeyEvent.VK_F11);
+				robot.keyRelease(KeyEvent.VK_F11);
+				break;
+
+			case "F12":
+				robot.keyPress(KeyEvent.VK_F12);
+				robot.keyRelease(KeyEvent.VK_F12);
+				break;
+			case "CHECKBOXES_STOP":
+				robot.keyRelease(KeyEvent.VK_CONTROL);
+				robot.keyRelease(KeyEvent.VK_SHIFT);
+				robot.keyRelease(KeyEvent.VK_ALT);
+				break;
 			case "ALT+CTR+DEL":
-				robot.keyPress(KeyEvent.VK_ALT);
 				robot.keyPress(KeyEvent.VK_CONTROL);
+				robot.keyPress(KeyEvent.VK_ALT);
+
 				robot.keyPress(KeyEvent.VK_DELETE);
 				try {
 					Thread.sleep(20);
@@ -364,8 +529,9 @@ public class MouseApp {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				robot.keyRelease(KeyEvent.VK_ALT);
+
 				robot.keyRelease(KeyEvent.VK_CONTROL);
+				robot.keyRelease(KeyEvent.VK_ALT);
 				robot.keyRelease(KeyEvent.VK_DELETE);
 
 				break;
@@ -408,12 +574,18 @@ public class MouseApp {
 				if (!userName.replaceAll(" ", "").equals(
 						localUserName.replaceAll(" ", ""))) {
 					isLoggedIn = false;
-					
+
 					new Thread() {
-						@Override
 						public void run() {
 							try {
-								Thread.sleep(3000);
+								try {
+									writeJPG(getErrorImage(),
+											s.getOutputStream(), 0.5f);
+								} catch (IOException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+								Thread.sleep(2000);
 							} catch (InterruptedException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
@@ -425,8 +597,7 @@ public class MouseApp {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
-							//internetConnection();
-							//super.run();
+							// internetConnection();
 						}
 					}.start();
 				}
@@ -435,35 +606,37 @@ public class MouseApp {
 
 				e.printStackTrace();
 			}
-		} else if (line.startsWith("GLOBAL_IP")) {
-			isLoggedIn = true;
-			size = 0.3f;
-			scWidth = 580;
-			scHeight = 580;
 		} else if (line.equalsIgnoreCase("Bluetooth")) {
 			isLoggedIn = true;
 			size = 0.3f;
-			scWidth = 580;
-			scHeight = 580;
+			scWidth = 400;
+			scHeight = 400;
 		} else if (line.equalsIgnoreCase("LOCAL_IP")) {
 			isLoggedIn = true;
 			size = 0.5f;
-			scWidth = 1000;
-			scHeight = 1000;
-		} else if (line.endsWith("LEFT_CLICK")) {
+			scWidth = 900;
+			scHeight = 900;
+		} else if (line.equalsIgnoreCase("LEFT_CLICK")) {
 			robot.mousePress(InputEvent.BUTTON1_MASK);
 			robot.mouseRelease(InputEvent.BUTTON1_MASK);
-		} else if (line.endsWith("LEFT_CLICK_UP")) {
+		} else if (line.equalsIgnoreCase("LEFT_CLICK_UP")) {
 			robot.mouseRelease(InputEvent.BUTTON1_MASK);
-		} else if (line.endsWith("LEFT_CLICK_DOWN")) {
+		} else if (line.equalsIgnoreCase("LEFT_CLICK_DOWN")) {
 			robot.mousePress(InputEvent.BUTTON1_MASK);
-		} else if (line.equals("RIGHT_CLICK")) {
+		} else if (line.equalsIgnoreCase("RIGHT_CLICK")) {
 			robot.mousePress(InputEvent.BUTTON3_MASK);
 			robot.mouseRelease(InputEvent.BUTTON3_MASK);
-		} else if (line.endsWith("SCROLL_DOWN")) {
+		} else if (line.equalsIgnoreCase("SCROLL_DOWN")) {
 			robot.mouseWheel(1);
-		} else if (line.endsWith("SCROLL_UP")) {
+		} else if (line.equalsIgnoreCase("SCROLL_UP")) {
 			robot.mouseWheel(-1);
+		} else if (line.startsWith("ZOOM:")) {
+			try {
+				String str = line.replace("ZOOM:", "");
+				percentZoom = 100 - Integer.parseInt(str);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		} else if (line.equals("Null")) {
 			throw new NullPointerException("Closing stream");
 		} else if (line.equalsIgnoreCase("SHUT DOWN")) {
@@ -494,6 +667,20 @@ public class MouseApp {
 				e.printStackTrace();
 			}
 
+		}else if (line.startsWith("CommandLine:")) {
+			line=line.replace("CommandLine:", "");
+		ArrayList<String> cmd=	CMD.Excecute(line);
+if(cmd!=null){
+////UDP Sending
+	pw.println(line+"_Command");
+	for(String s:cmd){
+		pw.println(s);
+		System.out.println(s);
+		
+	}
+	pw.println("@END@");
+	
+}
 		} else if (line.startsWith("Motion:")) {
 			line = line.replace("Motion:", "");
 			String[] values = line.split("@@");
@@ -509,6 +696,15 @@ public class MouseApp {
 					width + Integer.parseInt(values[2].replace("z:", "")),
 					height - moveHeight);
 
+		} else if (line.startsWith("Move:")) {
+			line = line.replace("Move:", "").replace("=", "").replace("x", "")
+					.replace("y", "");
+			String[] integers = line.split(":");
+			robot.mouseMove(
+					MouseInfo.getPointerInfo().getLocation().x
+							+ (int) (Float.parseFloat(integers[0])),
+					MouseInfo.getPointerInfo().getLocation().y
+							+ (int) (Float.parseFloat(integers[1])));
 		} else if (line.startsWith("x:")) {
 
 			// z==x
@@ -543,10 +739,11 @@ public class MouseApp {
 					try {
 
 						OutputStream out = s.getOutputStream();
-						if(isLoggedIn)
-						writeJPG(getComputerScreenshot(), out, size);
-						else{
-							writeJPG(getErrorImage("denied.png"), out, size);		
+						if (isLoggedIn) {
+							writeJPG(getComputerScreenshot(), out, size);
+						} else {
+
+							writeJPG(getErrorImage(), out, size);
 						}
 						// ImageIO.write(getComputerScreenshot(), "PNG", out);
 						// out.close();
@@ -561,7 +758,7 @@ public class MouseApp {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-					//	internetConnection();
+						internetConnection();
 						// runConnetions = false;
 						// fr.createUI();
 					} catch (Exception ex) {
@@ -573,7 +770,7 @@ public class MouseApp {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-						//internetConnection();
+						internetConnection();
 						// runConnetions = false;
 						// fr.createUI();
 					} catch (Error ex) {
@@ -600,18 +797,33 @@ public class MouseApp {
 					return;
 				}
 				out = s.getOutputStream();
-				size = (size > 0.1) ? 0.2f : 0.1f;
+				size = (size > 0.1) ? 0.11f : 0.1f;
 				writeJPG(webCam.getCameraImage(), out, size);
 				// ImageIO.write(getComputerScreenshot(), "PNG", out);
 				// out.close();
 				out.flush();
 			} catch (Exception e) {
 
-				// TODO Auto-generated catch block
 				e.printStackTrace();
+				closeAll();
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException ex) {
+					// TODO Auto-generated catch block
+					ex.printStackTrace();
+				}
+				internetConnection();
 			} catch (Error e) {
 				// TODO: handle exception
 				e.printStackTrace();
+				closeAll();
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException ex) {
+					// TODO Auto-generated catch block
+					ex.printStackTrace();
+				}
+				internetConnection();
 			}
 
 		} else if (line.equalsIgnoreCase("STOP_CAM")) {
@@ -627,8 +839,8 @@ public class MouseApp {
 		}
 
 		try {
-			if(s!=null)
-			s.getOutputStream().flush();
+			if (s != null)
+				s.getOutputStream().flush();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -657,32 +869,30 @@ public class MouseApp {
 
 	public static void writeJPG(BufferedImage bufferedImage,
 			OutputStream outputStream, float quality) throws IOException {
-		try {
-			Iterator<ImageWriter> iterator = ImageIO
-					.getImageWritersByFormatName("jpg");
-			ImageWriter imageWriter = iterator.next();
-			ImageWriteParam imageWriteParam = imageWriter
-					.getDefaultWriteParam();
-			imageWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-			imageWriteParam.setCompressionQuality(quality);
-			ImageOutputStream imageOutputStream = new MemoryCacheImageOutputStream(
-					outputStream);
-			imageWriter.setOutput(imageOutputStream);
 
-			IIOImage iioimage = new IIOImage(bufferedImage, null, null);
+		Iterator<ImageWriter> iterator = ImageIO
+				.getImageWritersByFormatName("jpg");
+		ImageWriter imageWriter = iterator.next();
+		ImageWriteParam imageWriteParam = imageWriter.getDefaultWriteParam();
+		imageWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+		imageWriteParam.setCompressionQuality(quality);
+		ImageOutputStream imageOutputStream = new MemoryCacheImageOutputStream(
+				outputStream);
+		imageWriter.setOutput(imageOutputStream);
 
-			imageWriter.write(null, iioimage, imageWriteParam);
-			imageOutputStream.flush();
-			outputStream.flush();
-		} catch (java.net.SocketException e) {
-		}
+		IIOImage iioimage = new IIOImage(bufferedImage, null, null);
+
+		imageWriter.write(null, iioimage, imageWriteParam);
+		imageOutputStream.flush();
+		outputStream.flush();
 
 	}
 
 	private static Robot robot;
 	private static int scWidth = 1000, scHeight = 1000;
+	private int percentZoom = 100;
 
-	public static BufferedImage getComputerScreenshot() {
+	public BufferedImage getComputerScreenshot() {
 		Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit()
 				.getScreenSize());
 		BufferedImage capture = null;
@@ -695,12 +905,43 @@ public class MouseApp {
 			Graphics2D graphics2D = capture.createGraphics();
 			int x = MouseInfo.getPointerInfo().getLocation().x;
 			int y = MouseInfo.getPointerInfo().getLocation().y;
-			graphics2D.setColor(Color.white);
-			graphics2D.fillRect(x, y, 10, 10); // cursor.gif is 16x16 size.
-			graphics2D.setColor(Color.black);
-			graphics2D.drawRect(x, y, 10, 10);
-			graphics2D.dispose();
+			graphics2D.setColor(Color.BLUE);
+			int length = 30;
+			graphics2D.fillOval(x - length / 3, y - length / 3, length, length);
 
+			graphics2D.setColor(Color.BLACK);
+			graphics2D.fillRect(x, y, 10, 10); // cursor.gif is 16x16 size.
+			graphics2D.setColor(Color.WHITE);
+			graphics2D.fillRect(x + 2, y + 2, 7, 7); // cursor.gif is 16x16
+														// size.
+			graphics2D.setColor(Color.RED);
+			graphics2D.fillRect(x + 2, y, 6, 6);
+
+			graphics2D.dispose();
+			try {
+				// /gia zoom kanw crop edw sto capture
+				int cropWidth = (int) (capture.getWidth() * percentZoom / 100.0), cropHeight = (int) (capture
+						.getHeight() * percentZoom / 100.0), cropPosX = x
+						- cropWidth / 2, cropPosY = y - cropHeight / 2;
+
+				if (cropPosX < 0) {
+					cropPosX = 0;
+				} else if (cropPosX + cropWidth > capture.getWidth()) {
+					cropPosX = capture.getWidth() - cropWidth;
+				}
+
+				if (cropPosY < 0) {
+					cropPosY = 0;
+				} else if (cropPosY + cropHeight > capture.getHeight()) {
+					cropPosY = capture.getHeight() - cropHeight;
+				}
+
+				if (capture != null)
+					capture = cropImage(capture, cropPosX, cropPosY, cropWidth,
+							cropHeight);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			Image image = capture.getScaledInstance(scWidth, scHeight,
 					BufferedImage.SCALE_FAST);
 			BufferedImage bf2 = new BufferedImage(scWidth, scHeight,
@@ -715,10 +956,18 @@ public class MouseApp {
 		return capture;
 	}
 
-	public static BufferedImage getErrorImage(String file) throws IOException {
+	private BufferedImage cropImage(BufferedImage src, int x, int y, int width,
+			int height) {
 
-		Image image = ImageIO.read(new File(file));
-		BufferedImage bf2 = new BufferedImage(scWidth+100, scHeight+100,
+		BufferedImage dest = src.getSubimage(x, y, width, height);
+		return dest;
+	}
+
+	public static BufferedImage getErrorImage() throws IOException {
+		URL url = MouseApp.class.getResource("/resources/denied.png");
+		ImageIcon icon = new ImageIcon(url);
+		Image image = icon.getImage();
+		BufferedImage bf2 = new BufferedImage(scWidth + 100, scHeight + 100,
 				BufferedImage.TYPE_INT_RGB);
 		Graphics2D g2d = bf2.createGraphics();
 		g2d.drawImage(image, 100, 50, null);
@@ -728,9 +977,11 @@ public class MouseApp {
 	}
 
 	public static Fr fr;
+	private static OsCheck.OSType ostype;
 
 	public static void main(String[] args) {
-		new Fr();
+		fr = new Fr();
+		ostype = OsCheck.getOperatingSystemType();
 	}
 
 	public class BluetoothDeviceDiscovery implements DiscoveryListener {
