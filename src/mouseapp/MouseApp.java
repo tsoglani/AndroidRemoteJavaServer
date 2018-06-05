@@ -1,280 +1,261 @@
 package mouseapp;
 
-import java.awt.AWTException;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Image;
-import java.awt.MouseInfo;
-import java.awt.Rectangle;
-import java.awt.Robot;
-import java.awt.Toolkit;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.URL;
+import java.awt.event.*;
+import javax.swing.filechooser.*;
+import java.io.*;
+import javax.imageio.metadata.*;
+import javax.imageio.*;
+import javax.imageio.stream.*;
+import java.awt.image.*;
+import java.awt.*;
+import javax.swing.*;
+import java.net.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Vector;
+import javax.microedition.io.*;
+import javax.bluetooth.*;
 
-import javax.bluetooth.DeviceClass;
-import javax.bluetooth.DiscoveryAgent;
-import javax.bluetooth.DiscoveryListener;
-import javax.bluetooth.LocalDevice;
-import javax.bluetooth.RemoteDevice;
-import javax.bluetooth.ServiceRecord;
-import javax.bluetooth.UUID;
-import javax.imageio.IIOImage;
-import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.ImageOutputStream;
-import javax.imageio.stream.MemoryCacheImageOutputStream;
-import javax.microedition.io.Connector;
-import javax.microedition.io.StreamConnection;
-import javax.microedition.io.StreamConnectionNotifier;
-import javax.swing.ImageIcon;
-import javax.swing.KeyStroke;
-
-/**
- * 
- * @author tsoglani
- */
-public class MouseApp {
-
-	private WebcamShot webCam;
-	final int port = 2000;
-	private ServerSocket ss;
-	public static PrintWriter pw;
-	private static Socket s;
-	private StreamConnection connection = null;
-	private BufferedReader br;
-	public static boolean runConnetions = false;
-	private StreamConnectionNotifier notifier;
-	static float size = 0.1f;
-	private static boolean isLoggedIn = true;
-	private Audio audioController;
-
-	/**
-	 * enables internet connection
-	 */
-	public void internetConnection() {
-		new Thread() {
-
-			@Override
-			public void run() {
-
-				try {
-
-					// while (true) {
-					System.out.println("waiting ..");
-					ss = new ServerSocket(port);
-					// ss.bind(new InetSocketAddress("0.0.0.0", port));
-					s = ss.accept();
-
-					pw = new PrintWriter(s.getOutputStream(), true);
-					pw.println("works");
-					System.out.println("connected " + s.getInetAddress());
-					new Thread() {
-
-						@Override
-						public void run() {
-
-							receiver(s);
-
-						}
-					}.start();
-				} catch (java.net.BindException ex) {
-
-					ex.printStackTrace();
-
-				} catch (NullPointerException ex) {
-					ex.printStackTrace();
-
-				} catch (Exception ex) {
-					ex.printStackTrace();
-
-				}
-			}
-
-		}.start();
-	}
-
-	public ArrayList<String> bluetoothConnection() {
-		ArrayList<String> list = null;
-		try {
-			BluetoothDeviceDiscovery bl = new BluetoothDeviceDiscovery();
-			list = bl.getNames();
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}
-		return list;
-	}
-
-	protected void closeAll() {
-		percentZoom = 100;
-		if (webCam != null)
-			webCam.closeCamera();
-		try {
-			if (br != null) {
-				br.close();
-				br = null;
-			}
-			if (pw != null) {
-				pw.close();
-				pw = null;
-			}
-			if (s != null) {
-				s.close();
-				s = null;
-			}
-			if (ss != null) {
-				ss.close();
-				ss = null;
-			}
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			// fr.createUI();
-
-		}
-		try {
-			if (notifier != null) {
-				try {
-					notifier.close();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-			if (connection != null) {
-				connection.close();
-				connection = null;
-			}
-
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			// fr.createUI();
-
-		}
-		System.gc();
-	}
-
-	public void receiver(Socket s) {
-		try {
-			try {
-				br = new BufferedReader(new InputStreamReader(
-						s.getInputStream()));
-				try {
-					while (runConnetions) {
-
-						Thread.sleep(10);
-						String line = br.readLine();
-						// System.out.println(line);
-						processString(line);
-					}
-				} catch (java.net.SocketException e) {
-					if (Fr.isNotClosing) {
-						e.printStackTrace();
-						// runConnetions=false;
-						closeAll();
-						runConnetions = false;
-						System.exit(1);
-
-					} else {
-						e.printStackTrace();
-						// runConnetions=false;
-						closeAll();
-						Thread.sleep(1000);
-						internetConnection();
-					}
-				} catch (NullPointerException e) {
-
-					if (Fr.isNotClosing) {
-						runConnetions = false;
-						e.printStackTrace();
-						// runConnetions=false;
-						closeAll();
-						System.exit(1);
-
-					} else {
-						e.printStackTrace();
-						// runConnetions=false;
-						closeAll();
-						Thread.sleep(1000);
-						internetConnection();
-					}
-				}
-			} catch (Exception ex) {
-				if (Fr.isNotClosing) {
-					runConnetions = false;
-					ex.printStackTrace();
-					// runConnetions=false;
-					closeAll();
-					System.exit(1);
-
-				} else {
-					Thread.sleep(1000);
-					internetConnection();
-				}
-				ex.printStackTrace();
-				// runConnetions = false;
-				// fr.createUI();
-				// ex.printStackTrace();
-
-			}
-			Thread.sleep(1000);
-			// internetConnection();
-		} catch (InterruptedException ex) {
-			ex.printStackTrace();
-			ex.printStackTrace();
-			runConnetions = false;
-			fr.createUI();
-		}
-
-	}
-
-	public void receiver(BufferedReader br) {
-		try {
-
-			try {
-				this.br = br;
-				while (runConnetions) {
-					Thread.sleep(10);
-					String line = br.readLine();
-
-					// System.out.println(line);
-					processString(line);
-				}
-			} catch (Exception ex) {
-				ex.printStackTrace();
-
-			}
-			closeAll();
-			Thread.sleep(1000);
-			try {
-				openBT();
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			}
-		} catch (InterruptedException ex) {
-			ex.printStackTrace();
-		}
-	}
-
-	public void processString(String line) throws AWTException {
-		Robot robot = new Robot();
-		if (line == null) {
-			return;
-		}
-		if (line.startsWith("keyboard:")) {
+public class MouseApp
+{
+    private WebcamShot webCam;
+    static int port;
+    private ServerSocket ss;
+    public static PrintWriter pw;
+    static Socket s;
+    private StreamConnection connection;
+    private BufferedReader br;
+    public static boolean runConnetions;
+    private StreamConnectionNotifier notifier;
+    static float qualityPad;
+    static float qualitycamera;
+    private static boolean isLoggedIn;
+    private Audio audioController;
+    Mic mic;
+    Thread shutDownThread;
+    private Wind w;
+    boolean isSignedIn;
+    private int timeCounter;
+    private int seconds;
+    private int timeToShutDown;
+    private Thread thread;
+    private static Robot robot;
+    private static int scWidth;
+    private static int scHeight;
+    private int percentZoom;
+    private static boolean showMouseIcon;
+    public static Fr fr;
+    private static OsCheck.OSType ostype;
+    
+    static {
+        MouseApp.port = 2000;
+        MouseApp.runConnetions = false;
+        MouseApp.qualityPad = 0.1f;
+        MouseApp.qualitycamera = 0.1f;
+        MouseApp.isLoggedIn = true;
+        MouseApp.scWidth = 1000;
+        MouseApp.scHeight = 1000;
+        MouseApp.showMouseIcon = false;
+    }
+    
+    public MouseApp() {
+        this.connection = null;
+        this.isSignedIn = false;
+        this.timeCounter = 0;
+        this.seconds = 0;
+        this.percentZoom = 100;
+    }
+    
+    public void internetConnection() {
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    System.out.println("waiting ..");
+                    MouseApp.access$0(MouseApp.this, new ServerSocket(MouseApp.port));
+                    MouseApp.s = MouseApp.this.ss.accept();
+                    MouseApp.pw = new PrintWriter(MouseApp.s.getOutputStream(), true);
+                    final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+                    final int width = (int)screenSize.getWidth();
+                    final int height = (int)screenSize.getHeight();
+                    final int maxResolution = Math.min(width, height);
+                    MouseApp.pw.println("works:maxResolution:" + maxResolution + "@@qualityPad:" + (int)(MouseApp.qualityPad * 100.0f) + "@@qualityCam:" + (int)(MouseApp.qualitycamera * 100.0f));
+                    System.out.println("connected " + MouseApp.s.getInetAddress());
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            MouseApp.this.receiver(MouseApp.s);
+                        }
+                    }.start();
+                }
+                catch (BindException ex) {
+                    ex.printStackTrace();
+                }
+                catch (NullPointerException ex2) {
+                    ex2.printStackTrace();
+                }
+                catch (Exception ex3) {
+                    ex3.printStackTrace();
+                }
+            }
+        }.start();
+    }
+    
+    public ArrayList<String> bluetoothConnection() {
+        ArrayList<String> list = null;
+        try {
+            final BluetoothDeviceDiscovery bl = new BluetoothDeviceDiscovery();
+            list = bl.getNames();
+        }
+        catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        return list;
+    }
+    
+    protected void closeAll() {
+        this.percentZoom = 100;
+        this.isSignedIn = false;
+        if (this.webCam != null) {
+            this.webCam.closeCamera();
+        }
+        try {
+            if (this.br != null) {
+                this.br.close();
+                this.br = null;
+            }
+            if (MouseApp.pw != null) {
+                MouseApp.pw.close();
+                MouseApp.pw = null;
+            }
+            if (MouseApp.s != null) {
+                MouseApp.s.close();
+                MouseApp.s = null;
+            }
+            if (this.ss != null) {
+                this.ss.close();
+                this.ss = null;
+            }
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        try {
+            if (this.notifier != null) {
+                try {
+                    this.notifier.close();
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            if (this.connection != null) {
+                this.connection.close();
+                this.connection = null;
+            }
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        System.gc();
+    }
+    
+    public void receiver(final Socket s) {
+        try {
+            try {
+                this.br = new BufferedReader(new InputStreamReader(s.getInputStream()));
+                try {
+                    while (MouseApp.runConnetions) {
+                        final String line = this.br.readLine();
+                        this.processString(line);
+                    }
+                }
+                catch (SocketException e) {
+                    if (Fr.isNotClosing) {
+                        e.printStackTrace();
+                        this.closeAll();
+                        MouseApp.runConnetions = false;
+                        System.exit(1);
+                    }
+                    else {
+                        e.printStackTrace();
+                        this.closeAll();
+                        Thread.sleep(1000L);
+                        this.internetConnection();
+                    }
+                }
+                catch (NullPointerException e2) {
+                    if (Fr.isNotClosing) {
+                        MouseApp.runConnetions = false;
+                        e2.printStackTrace();
+                        this.closeAll();
+                        System.exit(1);
+                    }
+                    else {
+                        e2.printStackTrace();
+                        this.closeAll();
+                        Thread.sleep(1000L);
+                        this.internetConnection();
+                    }
+                }
+            }
+            catch (Exception ex) {
+                if (Fr.isNotClosing) {
+                    MouseApp.runConnetions = false;
+                    ex.printStackTrace();
+                    this.closeAll();
+                    System.exit(1);
+                }
+                else {
+                    Thread.sleep(1000L);
+                    this.internetConnection();
+                }
+                ex.printStackTrace();
+            }
+            Thread.sleep(1000L);
+        }
+        catch (InterruptedException ex2) {
+            ex2.printStackTrace();
+            ex2.printStackTrace();
+            MouseApp.runConnetions = false;
+            MouseApp.fr.createUI();
+        }
+    }
+    
+    public void receiver(final BufferedReader br) {
+        try {
+            try {
+                this.br = br;
+                while (MouseApp.runConnetions) {
+                    final String line = br.readLine();
+                    this.processString(line);
+                }
+            }
+            catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            this.closeAll();
+            Thread.sleep(1000L);
+            try {
+                this.openBT();
+            }
+            catch (Exception ex2) {
+                ex2.printStackTrace();
+            }
+        }
+        catch (InterruptedException ex3) {
+            ex3.printStackTrace();
+        }
+    }
+    
+    public void processString(String line) throws AWTException {
+        final Robot robot = new Robot();
+        System.out.println(line);
+        if (line == null || line.replaceAll(" ", "").equals("")) {
+            throw new NullPointerException();
+        }
+      if (line.startsWith("keyboard:")) {
 			String symbol = line.replace("keyboard:", "");
 			switch (symbol) {
 			case "SPACE":
@@ -560,431 +541,690 @@ public class MouseApp {
 					robot.keyRelease(ks.getKeyCode());
 				}
 			}
-		} else if (line.startsWith("GLOBAL_IP:")) {
-			size = 0.3f;
-
-			scWidth = 580;
-			scHeight = 580;
-			String userName = line.replace("GLOBAL_IP:", "");
-			try {
-				isLoggedIn = true;
-				// KindOfDatabase kod= new KindOfDatabase();
-				// String localUserName=kod.getUserName();
-				String localUserName = Fr.userName.getText();
-				if (!userName.replaceAll(" ", "").equals(
-						localUserName.replaceAll(" ", ""))) {
-					isLoggedIn = false;
-
-					new Thread() {
-						public void run() {
-							try {
-								try {
-									writeJPG(getErrorImage(),
-											s.getOutputStream(), 0.5f);
-								} catch (IOException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-								Thread.sleep(2000);
-							} catch (InterruptedException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							closeAll();
-							try {
-								Thread.sleep(1000);
-							} catch (InterruptedException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							// internetConnection();
-						}
-					}.start();
-				}
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-
-				e.printStackTrace();
-			}
-		} else if (line.equalsIgnoreCase("Bluetooth")) {
-			isLoggedIn = true;
-			size = 0.3f;
-			scWidth = 400;
-			scHeight = 400;
-		} else if (line.equalsIgnoreCase("LOCAL_IP")) {
-			isLoggedIn = true;
-			size = 0.5f;
-			scWidth = 900;
-			scHeight = 900;
-		} else if (line.equalsIgnoreCase("LEFT_CLICK")) {
-			robot.mousePress(InputEvent.BUTTON1_MASK);
-			robot.mouseRelease(InputEvent.BUTTON1_MASK);
-		} else if (line.equalsIgnoreCase("LEFT_CLICK_UP")) {
-			robot.mouseRelease(InputEvent.BUTTON1_MASK);
-		} else if (line.equalsIgnoreCase("LEFT_CLICK_DOWN")) {
-			robot.mousePress(InputEvent.BUTTON1_MASK);
-		} else if (line.equalsIgnoreCase("RIGHT_CLICK")) {
-			robot.mousePress(InputEvent.BUTTON3_MASK);
-			robot.mouseRelease(InputEvent.BUTTON3_MASK);
-		} else if (line.equalsIgnoreCase("SCROLL_DOWN")) {
-			robot.mouseWheel(1);
-		} else if (line.equalsIgnoreCase("SCROLL_UP")) {
-			robot.mouseWheel(-1);
-		} else if (line.startsWith("ZOOM:")) {
-			try {
-				String str = line.replace("ZOOM:", "");
-				percentZoom = 100 - Integer.parseInt(str);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		} else if (line.equals("Null")) {
-			throw new NullPointerException("Closing stream");
-		} else if (line.equalsIgnoreCase("SHUT DOWN")) {
-			try {
-				shutdown();
-			} catch (RuntimeException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-		} else if (line.equalsIgnoreCase("SLEEP")) {
-			try {
-				Runtime.getRuntime().exec("cmd /c shutdown -l");
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-		} else if (line.equalsIgnoreCase("RESTART")) {
-			try {
-				Runtime.getRuntime().exec("shutdown -r");
-
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-		}else if (line.startsWith("CommandLine:")) {
-			line=line.replace("CommandLine:", "");
-		ArrayList<String> cmd=	CMD.Excecute(line);
-if(cmd!=null){
-////UDP Sending
-	pw.println(line+"_Command");
-	for(String s:cmd){
-		pw.println(s);
-		System.out.println(s);
-		
-	}
-	pw.println("@END@");
-	
+} 
+            else if (line.startsWith("Send:")) {
+                final int numberOfImages = Integer.parseInt(line.replace("Send:", ""));
+                try {
+                    MouseApp.pw.println("ok");
+                    System.out.println(numberOfImages);
+                    final String[] title = this.br.readLine().split("@@@@@@");
+                    String appFolder = title[title.length - 1];
+                    System.out.println("appFolder= " + appFolder);
+                    if (appFolder == null || !appFolder.matches(".*[A-Za-z].*")) {
+                        appFolder = "remoteDesktop_Files";
+                    }
+                    for (int j = 0; j < numberOfImages; ++j) {
+                        System.out.println("title= " + title[j]);
+                        final byte[] buffer = new byte[1045];
+                        String desktop = "";
+                        switch (MouseApp.ostype) {
+                            case Windows: {
+                                final FileSystemView filesys = FileSystemView.getFileSystemView();
+                                final File[] roots = filesys.getRoots();
+                                desktop = filesys.getHomeDirectory().getPath();
+                                break;
+                            }
+                            case MacOS:
+                            case Linux: {
+                                desktop = new File(System.getProperty("user.home"), "Desktop").getPath();
+                                break;
+                            }
+                        }
+                        File f;
+                        if (desktop == null || desktop == "") {
+                            f = new File(String.valueOf(appFolder) + File.separator + title[j]);
+                        }
+                        else {
+                            f = new File(String.valueOf(desktop) + File.separator + appFolder + File.separator + title[j]);
+                        }
+                        final File directory = new File(String.valueOf(desktop) + File.separator + appFolder);
+                        if (!directory.exists()) {
+                            directory.mkdir();
+                        }
+                        Desktop.getDesktop().open(new File(directory.getAbsolutePath()));
+                        final FileOutputStream fos = new FileOutputStream(f);
+                        int bytes = 0;
+                        boolean eof = false;
+                        while (!eof) {
+                            bytes = MouseApp.s.getInputStream().read(buffer);
+                            final int offset = bytes - 11;
+                            byte[] eofByte = new byte[11];
+                            String message = null;
+                            try {
+                                eofByte = Arrays.copyOfRange(buffer, offset, bytes);
+                                message = new String(eofByte, 0, 11);
+                            }
+                            catch (ArrayIndexOutOfBoundsException e10) {
+                                message = "end of file";
+                            }
+                            if (message.equalsIgnoreCase("end of file")) {
+                                eof = true;
+                            }
+                            else {
+                                fos.write(buffer, 0, bytes);
+                                fos.flush();
+                            }
+                        }
+                        fos.close();
+                    }
+                    MouseApp.pw.println("send_over");
+                }
+                catch (Exception e2) {
+                    e2.printStackTrace();
+                }
+            }
+            else if (line.startsWith("Resolution:")) {
+                try {
+                    final String ln = line.replace("Resolution:", "");
+                    final int resolution = MouseApp.scHeight = (MouseApp.scWidth = Integer.parseInt(ln));
+                }
+                catch (Exception e3) {
+                    e3.printStackTrace();
+                }
+            }
+            else if (line.startsWith("QualityPad:")) {
+                final String str = line.replace("QualityPad:", "");
+                MouseApp.qualityPad = Integer.parseInt(str) / 100.0f;
+            }
+            else if (line.startsWith("QualityCam:")) {
+                final String str = line.replace("QualityCam:", "");
+                MouseApp.qualitycamera = Integer.parseInt(str) / 100.0f;
+            }
+            else if (line.startsWith("GLOBAL_IP:")) {
+                MouseApp.qualityPad = 0.3f;
+                this.isSignedIn = true;
+                MouseApp.qualitycamera = 0.1f;
+                MouseApp.scWidth = 580;
+                MouseApp.scHeight = 580;
+                final String userName = line.replace("GLOBAL_IP:", "");
+                try {
+                    MouseApp.isLoggedIn = true;
+                    final String localUserName = Fr.userName.getText();
+                    if (!userName.replaceAll(" ", "").equals(localUserName.replaceAll(" ", ""))) {
+                        MouseApp.isLoggedIn = false;
+                        new Thread() {
+                            @Override
+                            public void run() {
+                                try {
+                                    try {
+                                        MouseApp.writeJPG(MouseApp.getErrorImage(), MouseApp.s.getOutputStream(), 0.5f);
+                                    }
+                                    catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                    Thread.sleep(2000L);
+                                }
+                                catch (InterruptedException e2) {
+                                    e2.printStackTrace();
+                                }
+                                MouseApp.this.closeAll();
+                                try {
+                                    Thread.sleep(1000L);
+                                }
+                                catch (InterruptedException e2) {
+                                    e2.printStackTrace();
+                                }
+                            }
+                        }.start();
+                    }
+                }
+                catch (Exception e4) {
+                    e4.printStackTrace();
+                }
+            }
+            else if (line.equalsIgnoreCase("Bluetooth")) {
+                MouseApp.isLoggedIn = true;
+                this.isSignedIn = true;
+                MouseApp.qualityPad = 0.3f;
+                MouseApp.scWidth = 400;
+                MouseApp.qualitycamera = 0.1f;
+                MouseApp.scHeight = 400;
+            }
+            else if (line.equalsIgnoreCase("LOCAL_IP")) {
+                MouseApp.isLoggedIn = true;
+                this.isSignedIn = true;
+                MouseApp.qualityPad = 0.5f;
+                MouseApp.qualitycamera = 0.1f;
+                MouseApp.scWidth = 900;
+                MouseApp.scHeight = 900;
+            }
+            else if (line.equalsIgnoreCase("LEFT_CLICK")) {
+                robot.mousePress(16);
+                robot.mouseRelease(16);
+            }
+            else if (line.equalsIgnoreCase("LEFT_CLICK_UP")) {
+                robot.mouseRelease(16);
+            }
+            else if (line.equalsIgnoreCase("LEFT_CLICK_DOWN")) {
+                robot.mousePress(16);
+            }
+            else if (line.equalsIgnoreCase("RIGHT_CLICK")) {
+                robot.mousePress(4);
+                robot.mouseRelease(4);
+            }
+            else if (line.equalsIgnoreCase("SCROLL_DOWN")) {
+                robot.mouseWheel(1);
+            }
+            else if (line.equalsIgnoreCase("SCROLL_UP")) {
+                robot.mouseWheel(-1);
+            }
+            else if (line.startsWith("ZOOM:")) {
+                try {
+                    final String str = line.replace("ZOOM:", "");
+                    this.percentZoom = 100 - Integer.parseInt(str);
+                }
+                catch (Exception e3) {
+                    e3.printStackTrace();
+                }
+            }
+            else {
+                if (line.equals("NULL")) {
+                    throw new NullPointerException("Closing stream");
+                }
+                if (line.startsWith("SHUT_DOWN_IN:")) {
+                    final String shut_down_in = line.replace("SHUT_DOWN_IN:", "");
+                    this.timeToShutDown = Integer.parseInt(shut_down_in);
+                    if (this.shutDownThread != null && this.shutDownThread.isAlive()) {
+                        this.timeCounter = 0;
+                        this.seconds = 0;
+                        if (this.w != null) {
+                            this.w.hide();
+                            this.w.setVisible(false);
+                            this.w = null;
+                        }
+                        return;
+                    }
+                    (this.shutDownThread = new Thread() {
+                        @Override
+                        public void run() {
+                            try {
+                                while (MouseApp.this.timeCounter < MouseApp.this.timeToShutDown) {
+                                    if (MouseApp.fr.timeLab != null) {
+                                        MouseApp.fr.timeLab.setText("Time to shutDown: " + (MouseApp.this.timeToShutDown - MouseApp.this.timeCounter));
+                                    }
+                                    Thread.sleep(1000L);
+                                    final MouseApp this$0 = MouseApp.this;
+                                    MouseApp.access$6(this$0, this$0.seconds + 1);
+                                    if (MouseApp.this.seconds >= 60) {
+                                        final MouseApp this$2 = MouseApp.this;
+                                        MouseApp.access$7(this$2, this$2.timeCounter + 1);
+                                        MouseApp.access$6(MouseApp.this, 0);
+                                        if (MouseApp.this.timeToShutDown - MouseApp.this.timeCounter <= 3) {
+                                            Toolkit.getDefaultToolkit().beep();
+                                        }
+                                    }
+                                    if (MouseApp.this.timeToShutDown - MouseApp.this.timeCounter <= 15) {
+                                        if (MouseApp.this.w == null) {
+                                            MouseApp.access$9(MouseApp.this, new Wind(null, MouseApp.this));
+                                        }
+                                        MouseApp.this.w.message = "Shut Down in " + ((MouseApp.this.timeToShutDown - MouseApp.this.timeCounter - 1) * 60 + (60 - MouseApp.this.seconds));
+                                        MouseApp.this.w.repaint();
+                                    }
+                                }
+                                try {
+                                    MouseApp.shutdown();
+                                }
+                                catch (RuntimeException e) {
+                                    e.printStackTrace();
+                                }
+                                catch (IOException e2) {
+                                    e2.printStackTrace();
+                                }
+                            }
+                            catch (InterruptedException e3) {
+                                e3.printStackTrace();
+                            }
+                        }
+                    }).start();
+                }
+                else if (line.equalsIgnoreCase("SHUT DOWN")) {
+                    try {
+                        shutdown();
+                    }catch (RuntimeException e5) {
+                        e5.printStackTrace();
+                    } catch (Exception e6) {
+                        e6.printStackTrace();
+                    }
+                }
+                else if (line.equalsIgnoreCase("SLEEP")) {
+                    try {
+                        final String operatingSystem = System.getProperty("os.name");
+                        String shutdownCommand = null;
+                        if ("Linux".equalsIgnoreCase(operatingSystem) || "Mac OS X".equalsIgnoreCase(operatingSystem)) {
+                            shutdownCommand = "shutdown -h now";
+                        }
+                        else {
+                            if (!"Windows".equalsIgnoreCase(operatingSystem)) {
+                                Runtime.getRuntime().exec("shutdown -s -f");
+                                Runtime.getRuntime().exec("shutdown -h now");
+                                System.exit(0);
+                                return;
+                            }
+                            shutdownCommand = "shutdown -s -f";
+                        }
+                        Runtime.getRuntime().exec(shutdownCommand);
+                    }
+                    catch (IOException e6) {
+                        e6.printStackTrace();
+                    }
+                }
+                else if (line.equalsIgnoreCase("RESTART")) {
+                    try {
+                        final String operatingSystem = System.getProperty("os.name");
+                        String shutdownCommand = null;
+                        if ("Linux".equals(operatingSystem) || "Mac OS X".equals(operatingSystem)) {
+                            shutdownCommand = "shutdown -r now";
+                        }
+                        else {
+                            if (!"Windows".equals(operatingSystem)) {
+                                throw new RuntimeException("Unsupported operating system.");
+                            }
+                            shutdownCommand = "shutdown -r";
+                        }
+                        Runtime.getRuntime().exec(shutdownCommand);
+                    }
+                    catch (IOException e6) {
+                        e6.printStackTrace();
+                    }
+                }
+                else if (line.startsWith("CommandLine:")) {
+                    line = line.replace("CommandLine:", "");
+                    final ArrayList<String> cmd = CMD.Excecute(line);
+                    if (cmd != null) {
+                        MouseApp.pw.println(String.valueOf(line) + "_Command");
+                        for (final String s : cmd) {
+                            MouseApp.pw.println(s);
+                            System.out.println(s);
+                        }
+                        MouseApp.pw.println("@END@");
+                    }
+                }
+                else if (line.startsWith("Motion:")) {
+                    line = line.replace("Motion:", "");
+                    final String[] values = line.split("@@");
+                    final GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+                    final int width = MouseInfo.getPointerInfo().getLocation().x;
+                    final int height = MouseInfo.getPointerInfo().getLocation().y;
+                    int moveHeight = Integer.parseInt(values[1].replace("y:", ""));
+                    if (moveHeight == 0) {
+                        moveHeight = Integer.parseInt(values[0].replace("x:", ""));
+                    }
+                    robot.mouseMove(width + Integer.parseInt(values[2].replace("z:", "")), height - moveHeight);
+                }
+                else if (line.startsWith("Move:")) {
+                    line = line.replace("Move:", "").replace("=", "").replace("x", "").replace("y", "");
+                    final String[] integers = line.split(":");
+                    robot.mouseMove(MouseInfo.getPointerInfo().getLocation().x + (int)Float.parseFloat(integers[0]), MouseInfo.getPointerInfo().getLocation().y + (int)Float.parseFloat(integers[1]));
+                }
+                else if (line.startsWith("MoveTo:")) {
+                    final GraphicsDevice gd2 = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+                    final int width2 = gd2.getDisplayMode().getWidth();
+                    final int height2 = gd2.getDisplayMode().getHeight();
+                    line = line.replace("MoveTo:", "").replace("=", "").replace("x", "").replace("y", "");
+                    final String[] integers2 = line.split(":");
+                    robot.mouseMove((int)(Float.parseFloat(integers2[0]) * width2), (int)(Float.parseFloat(integers2[1]) * height2));
+                }
+                else if (line.startsWith("x:")) {
+                    final String[] values = line.split("@@");
+                    final GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+                    final int width = gd.getDisplayMode().getWidth();
+                    final int height = gd.getDisplayMode().getHeight();
+                    robot.mouseMove(width * Integer.parseInt(values[2].replace("z:", "")) / 5000, height - height * Integer.parseInt(values[1].replace("y:", "")) / 5000);
+                }
+                else if (line.equalsIgnoreCase("START_CAMERA")) {
+                    try {
+                        this.webCam = new WebcamShot();
+                        new Thread(this.webCam).start();
+                    }
+                    catch (Exception e3) {
+                        e3.printStackTrace();
+                    }
+                }
+                else if (line.equalsIgnoreCase("START_AUDIO_RECORDING")) {
+                    try {
+                        if (this.webCam != null) {
+                            try {
+                                this.webCam.closeCamera();
+                                this.webCam = null;
+                            }
+                            catch (Exception e3) {
+                                e3.printStackTrace();
+                            }
+                        }
+                        if (this.mic != null) {
+                            Mic.stopped = true;
+                            this.mic = null;
+                        }
+                        Thread.sleep(20L);
+                        System.out.println("Start Recording");
+                        (this.mic = new Mic()).writeAndSend();
+                    }
+                    catch (Exception e3) {
+                        e3.printStackTrace();
+                    }
+                    catch (Error e7) {
+                        e7.printStackTrace();
+                    }
+                }
+                else if (line.equalsIgnoreCase("STOP_AUDIO_RECORDING")) {
+                    if (this.mic != null) {
+                        System.out.println("Stop Recording");
+                        Mic.stopped = true;
+                        this.mic = null;
+                    }
+                }
+                else if (line.equalsIgnoreCase("SCREENSHOT") && MouseApp.s != null && !MouseApp.s.isClosed()) {
+                    if (this.thread != null && this.thread.isAlive()) {
+                        return;
+                    }
+                    (this.thread = new Thread() {
+                        @Override
+                        public void run() {
+                            try {
+                                final OutputStream out = MouseApp.s.getOutputStream();
+                                if (MouseApp.isLoggedIn) {
+                                    MouseApp.writeJPG(MouseApp.this.getComputerScreenshot(), out, MouseApp.qualityPad);
+                                }
+                                else {
+                                    MouseApp.writeJPG(MouseApp.getErrorImage(), out, MouseApp.qualityPad);
+                                }
+                                out.flush();
+                            }
+                            catch (IOException ex) {
+                                ex.printStackTrace();
+                                MouseApp.this.closeAll();
+                                try {
+                                    Thread.sleep(1000L);
+                                }
+                                catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                MouseApp.this.internetConnection();
+                            }
+                            catch (Exception ex2) {
+                                ex2.printStackTrace();
+                                MouseApp.this.closeAll();
+                                try {
+                                    Thread.sleep(1000L);
+                                }
+                                catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                MouseApp.this.internetConnection();
+                            }
+                            catch (Error ex3) {
+                                ex3.printStackTrace();
+                                MouseApp.this.closeAll();
+                                try {
+                                    Thread.sleep(1000L);
+                                }
+                                catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                MouseApp.this.internetConnection();
+                            }
+                        }
+                    }).start();
+                }
+                else if (line.equalsIgnoreCase("CAM_SCREENSHOT")) {
+                    try {
+                        if (this.webCam == null) {
+                            return;
+                        }
+                        final OutputStream out = MouseApp.s.getOutputStream();
+                        writeJPG(this.webCam.getCameraImage(), out, MouseApp.qualitycamera);
+                        out.flush();
+                    }
+                    catch (Exception e4) {
+                        e4.printStackTrace();
+                        this.closeAll();
+                        try {
+                            Thread.sleep(1000L);
+                        }
+                        catch (InterruptedException ex) {
+                            ex.printStackTrace();
+                        }
+                        this.internetConnection();
+                    }
+                    catch (Error e8) {
+                        e8.printStackTrace();
+                        this.closeAll();
+                        try {
+                            Thread.sleep(1000L);
+                        }
+                        catch (InterruptedException ex) {
+                            ex.printStackTrace();
+                        }
+                        this.internetConnection();
+                    }
+                }
+                else if (line.equalsIgnoreCase("STOP_CAM")) {
+                    if (this.webCam == null) {
+                        return;
+                    }
+                    try {
+                        this.webCam.closeCamera();
+                        this.webCam = null;
+                    }
+                    catch (Exception e3) {
+                        e3.printStackTrace();
+                    }
+                }
+            
+            try {
+                if (MouseApp.s != null) {
+                    MouseApp.s.getOutputStream().flush();
+                }
+            }
+            catch (IOException e6) {
+                e6.printStackTrace();
+            }
+        }
+        try {
+            if (!this.isSignedIn) {
+                this.closeAll();
+            }
+        }
+        catch (Exception e3) {
+            e3.printStackTrace();
+        }
 }
-		} else if (line.startsWith("Motion:")) {
-			line = line.replace("Motion:", "");
-			String[] values = line.split("@@");
-			GraphicsDevice gd = GraphicsEnvironment
-					.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-			int width = MouseInfo.getPointerInfo().getLocation().x;
-			int height = MouseInfo.getPointerInfo().getLocation().y;
-			int moveHeight = Integer.parseInt(values[1].replace("y:", ""));
-			if (moveHeight == 0) {
-				moveHeight = Integer.parseInt(values[0].replace("x:", ""));
-			}
-			robot.mouseMove(
-					width + Integer.parseInt(values[2].replace("z:", "")),
-					height - moveHeight);
-
-		} else if (line.startsWith("Move:")) {
-			line = line.replace("Move:", "").replace("=", "").replace("x", "")
-					.replace("y", "");
-			String[] integers = line.split(":");
-			robot.mouseMove(
-					MouseInfo.getPointerInfo().getLocation().x
-							+ (int) (Float.parseFloat(integers[0])),
-					MouseInfo.getPointerInfo().getLocation().y
-							+ (int) (Float.parseFloat(integers[1])));
-		} else if (line.startsWith("x:")) {
-
-			// z==x
-			// x==y
-			String[] values = line.split("@@");
-			GraphicsDevice gd = GraphicsEnvironment
-					.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-			int width = gd.getDisplayMode().getWidth();
-			int height = gd.getDisplayMode().getHeight();
-			robot.mouseMove(
-					width * Integer.parseInt(values[2].replace("z:", ""))
-							/ 5000,
-					height - height
-							* Integer.parseInt(values[1].replace("y:", ""))
-							/ 5000);
-
-		} else if (line.equalsIgnoreCase("START_CAMERA")) {
-			try {
-				webCam = new WebcamShot();
-				new Thread(webCam).start();
-				// SwingUtilities.invokeLater(webcamShot);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		} else if (line.equalsIgnoreCase("SCREENSHOT") && s != null
-				&& !s.isClosed()) {
-			if (thread != null && thread.isAlive()) {
-				return;
-			}
-			thread = new Thread() {
-				public void run() {
-					try {
-
-						OutputStream out = s.getOutputStream();
-						if (isLoggedIn) {
-							writeJPG(getComputerScreenshot(), out, size);
-						} else {
-
-							writeJPG(getErrorImage(), out, size);
-						}
-						// ImageIO.write(getComputerScreenshot(), "PNG", out);
-						// out.close();
-						out.flush();
-
-					} catch (IOException ex) {
-						ex.printStackTrace();
-						closeAll();
-						try {
-							Thread.sleep(1000);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						internetConnection();
-						// runConnetions = false;
-						// fr.createUI();
-					} catch (Exception ex) {
-						ex.printStackTrace();
-						closeAll();
-						try {
-							Thread.sleep(1000);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						internetConnection();
-						// runConnetions = false;
-						// fr.createUI();
-					} catch (Error ex) {
-						ex.printStackTrace();
-						closeAll();
-						try {
-							Thread.sleep(1000);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						internetConnection();
-						// runConnetions = false;
-						// fr.createUI();
-					}
-				}
-			};
-			thread.start();
-
-		} else if (line.equalsIgnoreCase("CAM_SCREENSHOT")) {
-			OutputStream out;
-			try {
-				if (webCam == null) {
-					return;
-				}
-				out = s.getOutputStream();
-				size = (size > 0.1) ? 0.11f : 0.1f;
-				writeJPG(webCam.getCameraImage(), out, size);
-				// ImageIO.write(getComputerScreenshot(), "PNG", out);
-				// out.close();
-				out.flush();
-			} catch (Exception e) {
-
-				e.printStackTrace();
-				closeAll();
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException ex) {
-					// TODO Auto-generated catch block
-					ex.printStackTrace();
-				}
-				internetConnection();
-			} catch (Error e) {
-				// TODO: handle exception
-				e.printStackTrace();
-				closeAll();
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException ex) {
-					// TODO Auto-generated catch block
-					ex.printStackTrace();
-				}
-				internetConnection();
-			}
-
-		} else if (line.equalsIgnoreCase("STOP_CAM")) {
-			if (webCam == null) {
-				return;
-			}
-			try {
-				webCam.closeCamera();
-				webCam = null;
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		try {
-			if (s != null)
-				s.getOutputStream().flush();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	}
-
-	private Thread thread;
-
-	public static void shutdown() throws RuntimeException, IOException {
-		String shutdownCommand;
-		String operatingSystem = System.getProperty("os.name");
-
-		if ("Linux".equals(operatingSystem)
-				|| "Mac OS X".equals(operatingSystem)) {
-			shutdownCommand = "shutdown -h now";
-		} else if ("Windows".equals(operatingSystem)) {
-			shutdownCommand = "shutdown.exe -s -t 0";
-		} else {
-			throw new RuntimeException("Unsupported operating system.");
-		}
-
-		Runtime.getRuntime().exec(shutdownCommand);
-		System.exit(0);
-	}
-
-	public static void writeJPG(BufferedImage bufferedImage,
-			OutputStream outputStream, float quality) throws IOException {
-
-		Iterator<ImageWriter> iterator = ImageIO
-				.getImageWritersByFormatName("jpg");
-		ImageWriter imageWriter = iterator.next();
-		ImageWriteParam imageWriteParam = imageWriter.getDefaultWriteParam();
-		imageWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-		imageWriteParam.setCompressionQuality(quality);
-		ImageOutputStream imageOutputStream = new MemoryCacheImageOutputStream(
-				outputStream);
-		imageWriter.setOutput(imageOutputStream);
-
-		IIOImage iioimage = new IIOImage(bufferedImage, null, null);
-
-		imageWriter.write(null, iioimage, imageWriteParam);
-		imageOutputStream.flush();
-		outputStream.flush();
-
-	}
-
-	private static Robot robot;
-	private static int scWidth = 1000, scHeight = 1000;
-	private int percentZoom = 100;
-
-	public BufferedImage getComputerScreenshot() {
-		Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit()
-				.getScreenSize());
-		BufferedImage capture = null;
-
-		try {
-			if (robot == null) {
-				robot = new Robot();
-			}
-			capture = robot.createScreenCapture(screenRect);
-			Graphics2D graphics2D = capture.createGraphics();
-			int x = MouseInfo.getPointerInfo().getLocation().x;
-			int y = MouseInfo.getPointerInfo().getLocation().y;
-			graphics2D.setColor(Color.BLUE);
-			int length = 30;
-			graphics2D.fillOval(x - length / 3, y - length / 3, length, length);
-
-			graphics2D.setColor(Color.BLACK);
-			graphics2D.fillRect(x, y, 10, 10); // cursor.gif is 16x16 size.
-			graphics2D.setColor(Color.WHITE);
-			graphics2D.fillRect(x + 2, y + 2, 7, 7); // cursor.gif is 16x16
-														// size.
-			graphics2D.setColor(Color.RED);
-			graphics2D.fillRect(x + 2, y, 6, 6);
-
-			graphics2D.dispose();
-			try {
-				// /gia zoom kanw crop edw sto capture
-				int cropWidth = (int) (capture.getWidth() * percentZoom / 100.0), cropHeight = (int) (capture
-						.getHeight() * percentZoom / 100.0), cropPosX = x
-						- cropWidth / 2, cropPosY = y - cropHeight / 2;
-
-				if (cropPosX < 0) {
-					cropPosX = 0;
-				} else if (cropPosX + cropWidth > capture.getWidth()) {
-					cropPosX = capture.getWidth() - cropWidth;
-				}
-
-				if (cropPosY < 0) {
-					cropPosY = 0;
-				} else if (cropPosY + cropHeight > capture.getHeight()) {
-					cropPosY = capture.getHeight() - cropHeight;
-				}
-
-				if (capture != null)
-					capture = cropImage(capture, cropPosX, cropPosY, cropWidth,
-							cropHeight);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			Image image = capture.getScaledInstance(scWidth, scHeight,
-					BufferedImage.SCALE_FAST);
-			BufferedImage bf2 = new BufferedImage(scWidth, scHeight,
-					BufferedImage.TYPE_INT_RGB);
-			Graphics2D g2d = bf2.createGraphics();
-			g2d.drawImage(image, 0, 0, null);
-			g2d.dispose();
-			return bf2;
-		} catch (AWTException ex) {
-			ex.printStackTrace();
-		}
-		return capture;
-	}
-
-	private BufferedImage cropImage(BufferedImage src, int x, int y, int width,
-			int height) {
-
-		BufferedImage dest = src.getSubimage(x, y, width, height);
-		return dest;
-	}
-
-	public static BufferedImage getErrorImage() throws IOException {
-		URL url = MouseApp.class.getResource("/resources/denied.png");
-		ImageIcon icon = new ImageIcon(url);
-		Image image = icon.getImage();
-		BufferedImage bf2 = new BufferedImage(scWidth + 100, scHeight + 100,
-				BufferedImage.TYPE_INT_RGB);
-		Graphics2D g2d = bf2.createGraphics();
-		g2d.drawImage(image, 100, 50, null);
-		g2d.dispose();
-		return bf2;
-
-	}
-
-	public static Fr fr;
-	private static OsCheck.OSType ostype;
-
-	public static void main(String[] args) {
-		fr = new Fr();
-		ostype = OsCheck.getOperatingSystemType();
-	}
-
-	public class BluetoothDeviceDiscovery implements DiscoveryListener {
+    
+    public static void shutdown() throws RuntimeException, IOException {
+        final String operatingSystem = System.getProperty("os.name");
+        String shutdownCommand;
+        if ("Linux".equals(operatingSystem) || "Mac OS X".equals(operatingSystem)) {
+            shutdownCommand = "shutdown -h now";
+        }
+        else {
+            if (!"Windows".equals(operatingSystem)) {
+                throw new RuntimeException("Unsupported operating system.");
+            }
+            shutdownCommand = "shutdown -s";
+        }
+        Runtime.getRuntime().exec(shutdownCommand);
+        System.exit(0);
+    }
+    
+    public static void writeJPG(final BufferedImage bufferedImage, final OutputStream outputStream, final float quality) throws IOException {
+        final Iterator<ImageWriter> iterator = ImageIO.getImageWritersByFormatName("jpg");
+        final ImageWriter imageWriter = iterator.next();
+        final ImageWriteParam imageWriteParam = imageWriter.getDefaultWriteParam();
+        imageWriteParam.setCompressionMode(2);
+        imageWriteParam.setCompressionQuality(quality);
+        final ImageOutputStream imageOutputStream = new MemoryCacheImageOutputStream(outputStream);
+        imageWriter.setOutput(imageOutputStream);
+        final IIOImage iioimage = new IIOImage(bufferedImage, null, null);
+        imageWriter.write(null, iioimage, imageWriteParam);
+        imageOutputStream.flush();
+        outputStream.flush();
+    }
+    
+    public BufferedImage getComputerScreenshot() {
+        final Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
+        BufferedImage capture = null;
+        try {
+            if (MouseApp.robot == null) {
+                MouseApp.robot = new Robot();
+            }
+            capture = MouseApp.robot.createScreenCapture(screenRect);
+            final Graphics2D graphics2D = capture.createGraphics();
+            final int x = MouseInfo.getPointerInfo().getLocation().x;
+            final int y = MouseInfo.getPointerInfo().getLocation().y;
+            if (MouseApp.showMouseIcon) {
+                graphics2D.setColor(Color.BLUE);
+                final int length = 30;
+                graphics2D.fillOval(x - length / 3, y - length / 3, length, length);
+                graphics2D.setColor(Color.BLACK);
+                graphics2D.fillRect(x, y, 10, 10);
+                graphics2D.setColor(Color.WHITE);
+                graphics2D.fillRect(x + 2, y + 2, 7, 7);
+                graphics2D.setColor(Color.RED);
+                graphics2D.fillRect(x + 2, y, 6, 6);
+                graphics2D.dispose();
+            }
+            try {
+                final int cropWidth = (int)(capture.getWidth() * this.percentZoom / 100.0);
+                final int cropHeight = (int)(capture.getHeight() * this.percentZoom / 100.0);
+                int cropPosX = x - cropWidth / 2;
+                int cropPosY = y - cropHeight / 2;
+                if (cropPosX < 0) {
+                    cropPosX = 0;
+                }
+                else if (cropPosX + cropWidth > capture.getWidth()) {
+                    cropPosX = capture.getWidth() - cropWidth;
+                }
+                if (cropPosY < 0) {
+                    cropPosY = 0;
+                }
+                else if (cropPosY + cropHeight > capture.getHeight()) {
+                    cropPosY = capture.getHeight() - cropHeight;
+                }
+                if (capture != null) {
+                    capture = this.cropImage(capture, cropPosX, cropPosY, cropWidth, cropHeight);
+                }
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+            final Image image = capture.getScaledInstance(MouseApp.scWidth, MouseApp.scHeight, 2);
+            final BufferedImage bf2 = new BufferedImage(MouseApp.scWidth, MouseApp.scHeight, 1);
+            final Graphics2D g2d = bf2.createGraphics();
+            g2d.drawImage(image, 0, 0, null);
+            g2d.dispose();
+            return bf2;
+        }
+        catch (AWTException ex) {
+            ex.printStackTrace();
+            return capture;
+        }
+    }
+    
+    private BufferedImage cropImage(final BufferedImage src, final int x, final int y, final int width, final int height) {
+        final BufferedImage dest = src.getSubimage(x, y, width, height);
+        return dest;
+    }
+    
+    public static BufferedImage getErrorImage() throws IOException {
+        final URL url = MouseApp.class.getResource("/resources/denied.png");
+        final ImageIcon icon = new ImageIcon(url);
+        final Image image = icon.getImage();
+        final BufferedImage bf2 = new BufferedImage(MouseApp.scWidth + 100, MouseApp.scHeight + 100, 1);
+        final Graphics2D g2d = bf2.createGraphics();
+        g2d.drawImage(image, 100, 50, null);
+        g2d.dispose();
+        return bf2;
+    }
+    
+    public static void main(final String[] args) {
+        MouseApp.fr = new Fr();
+        MouseApp.ostype = OsCheck.getOperatingSystemType();
+    }
+    
+    void openBT() {
+          LocalDevice local = null;
+    try
+    {
+        UUID uuid; // "04c6093b-0000-1000-8000-00805f9b34fb"
+              uuid = new UUID(80087355);
+			String url = "btspp://localhost:" + uuid.toString()
+					+ ";name=RemoteBluetooth";
+notifier = (StreamConnectionNotifier) Connector.open(url);
+    }
+    catch (Exception e)
+    {
+      e.printStackTrace();
+      fr.createUI();
+      return;
+    }
+    while (runConnetions) {
+      try
+      {
+        System.out.println("waiting for connection...");
+        this.connection = this.notifier.acceptAndOpen();
+        System.out.println("connected " + this.connection.toString());
+        pw = new PrintWriter(this.connection.openOutputStream(), true);
+        Dimension screenSize = Toolkit.getDefaultToolkit()
+          .getScreenSize();
+        int width = (int)screenSize.getWidth();
+        int height = (int)screenSize.getHeight();
+        int maxResolution = Math.min(width, height);
+        pw.println("works:maxResolution:" + maxResolution + 
+          "@@quality:" + qualityPad * 100.0F);
+        new Thread()
+        {
+          public void run()
+          {
+            try
+            {
+              MouseApp.this.br = new BufferedReader(new InputStreamReader(
+                MouseApp.this.connection.openInputStream(), "UTF-8"));
+              MouseApp.this.receiver(MouseApp.this.br);
+            }
+            catch (Exception ex)
+            {
+              ex.printStackTrace();
+            }
+          }
+        }.start();
+      }
+      catch (Exception e)
+      {
+        e.printStackTrace();
+        return;
+      }
+    }
+    }
+    
+    public Wind getW() {
+        return this.w;
+    }
+    
+    public void setW(final Wind w) {
+        this.w = w;
+    }
+    
+    static /* synthetic */ void access$0(final MouseApp mouseApp, final ServerSocket ss) {
+        mouseApp.ss = ss;
+    }
+    
+    static /* synthetic */ void access$6(final MouseApp mouseApp, final int seconds) {
+        mouseApp.seconds = seconds;
+    }
+    
+    static /* synthetic */ void access$7(final MouseApp mouseApp, final int timeCounter) {
+        mouseApp.timeCounter = timeCounter;
+    }
+    
+    static /* synthetic */ void access$9(final MouseApp mouseApp, final Wind w) {
+        mouseApp.w = w;
+    }
+    
+    static /* synthetic */ void access$12(final MouseApp mouseApp, final BufferedReader br) {
+        mouseApp.br = br;
+    }
+    
+   public class BluetoothDeviceDiscovery implements DiscoveryListener {
 
 		// object used for waiting
 		private Object lock = new Object();
@@ -1093,52 +1333,6 @@ if(cmd!=null){
 		}
 	}// end
 
-	void openBT() throws IOException {
-		LocalDevice local = null;
-
-		// setup the server to listen for connection
-		try {
-			local = LocalDevice.getLocalDevice();
-			local.setDiscoverable(DiscoveryAgent.GIAC);
-
-			UUID uuid = new UUID(80087355); // "04c6093b-0000-1000-8000-00805f9b34fb"
-			String url = "btspp://localhost:" + uuid.toString()
-					+ ";name=RemoteBluetooth";
-			notifier = (StreamConnectionNotifier) Connector.open(url);
-		} catch (Exception e) {
-			e.printStackTrace();
-			fr.createUI();
-			return;
-		}
-		// waiting for connection
-		while (runConnetions) {
-			try {
-				System.out.println("waiting for connection...");
-				connection = notifier.acceptAndOpen();
-				System.out.println("connected " + connection.toString());
-				pw = new PrintWriter(connection.openOutputStream(), true);
-				pw.println("works");
-				new Thread() {
-
-					@Override
-					public void run() {
-
-						try {
-							br = new BufferedReader(new InputStreamReader(
-									connection.openInputStream(), "UTF-8"));
-							receiver(br);
-						} catch (Exception ex) {
-							ex.printStackTrace();
-						}
-
-					}
-				}.start();
-			} catch (Exception e) {
-				e.printStackTrace();
-				return;
-			}
-		}
-	}
+	
 
 }// end class
-
