@@ -6,6 +6,8 @@ import javax.swing.*;
 import java.net.*;
 import java.awt.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Fr extends JFrame
 {
@@ -36,7 +38,11 @@ public class Fr extends JFrame
                     new Thread() {
                         @Override
                         public void run() {
-                            Fr.this.mouseApp.closeAll();
+                            try {
+                                Fr.this.mouseApp.closeAll();
+                            } catch (IOException ex) {
+                                Logger.getLogger(Fr.class.getName()).log(Level.SEVERE, null, ex);
+                            }
                         }
                     }.start();
                 }
