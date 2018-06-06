@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.microedition.io.*;
 import javax.bluetooth.*;
 
@@ -75,6 +77,7 @@ public class MouseApp
                     System.out.println("waiting ..");
                     MouseApp.access$0(MouseApp.this, new ServerSocket(MouseApp.port));
                     MouseApp.s = MouseApp.this.ss.accept();
+                    s.setSendBufferSize(40000);
                     MouseApp.pw = new PrintWriter(MouseApp.s.getOutputStream(), true);
                     final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
                     final int width = (int)screenSize.getWidth();
@@ -85,7 +88,21 @@ public class MouseApp
                     new Thread() {
                         @Override
                         public void run() {
+                            try{
                             MouseApp.this.receiver(MouseApp.s);
+                            }catch(Exception e){
+                            e.printStackTrace();
+                                try {
+                                    closeAll();
+                                } catch (Exception ex) {
+ex.printStackTrace();
+                                }
+                                if (runConnetions) {
+                             internetConnection();
+ 
+                                }
+                            }
+                            
                         }
                     }.start();
                 }
@@ -114,13 +131,12 @@ public class MouseApp
         return list;
     }
     
-    protected void closeAll() {
+    protected void closeAll() throws IOException {
         this.percentZoom = 100;
         this.isSignedIn = false;
         if (this.webCam != null) {
             this.webCam.closeCamera();
         }
-        try {
             if (this.br != null) {
                 this.br.close();
                 this.br = null;
@@ -137,11 +153,8 @@ public class MouseApp
                 this.ss.close();
                 this.ss = null;
             }
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        try {
+        
+       
             if (this.notifier != null) {
                 try {
                     this.notifier.close();
@@ -154,102 +167,39 @@ public class MouseApp
                 this.connection.close();
                 this.connection = null;
             }
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-        }
+       
         System.gc();
     }
     
-    public void receiver(final Socket s) {
-        try {
-            try {
+    public void receiver(final Socket s) throws IOException,AWTException{
+       
                 this.br = new BufferedReader(new InputStreamReader(s.getInputStream()));
-                try {
+                
                     while (MouseApp.runConnetions) {
                         final String line = this.br.readLine();
+                        
                         this.processString(line);
+                        
                     }
                 }
-                catch (SocketException e) {
-                    if (Fr.isNotClosing) {
-                        e.printStackTrace();
-                        this.closeAll();
-                        MouseApp.runConnetions = false;
-                        System.exit(1);
-                    }
-                    else {
-                        e.printStackTrace();
-                        this.closeAll();
-                        Thread.sleep(1000L);
-                        this.internetConnection();
-                    }
-                }
-                catch (NullPointerException e2) {
-                    if (Fr.isNotClosing) {
-                        MouseApp.runConnetions = false;
-                        e2.printStackTrace();
-                        this.closeAll();
-                        System.exit(1);
-                    }
-                    else {
-                        e2.printStackTrace();
-                        this.closeAll();
-                        Thread.sleep(1000L);
-                        this.internetConnection();
-                    }
-                }
-            }
-            catch (Exception ex) {
-                if (Fr.isNotClosing) {
-                    MouseApp.runConnetions = false;
-                    ex.printStackTrace();
-                    this.closeAll();
-                    System.exit(1);
-                }
-                else {
-                    Thread.sleep(1000L);
-                    this.internetConnection();
-                }
-                ex.printStackTrace();
-            }
-            Thread.sleep(1000L);
-        }
-        catch (InterruptedException ex2) {
-            ex2.printStackTrace();
-            ex2.printStackTrace();
-            MouseApp.runConnetions = false;
-            MouseApp.fr.createUI();
-        }
-    }
+              
     
-    public void receiver(final BufferedReader br) {
-        try {
-            try {
+    
+    public void receiver(final BufferedReader br) throws AWTException, IOException {
+      
                 this.br = br;
                 while (MouseApp.runConnetions) {
                     final String line = br.readLine();
+                    if (line.equalsIgnoreCase("NULL")||line==null) {
+                        throw new IOException("");
+                    }
                     this.processString(line);
                 }
-            }
-            catch (Exception ex) {
-                ex.printStackTrace();
-            }
-            this.closeAll();
-            Thread.sleep(1000L);
-            try {
-                this.openBT();
-            }
-            catch (Exception ex2) {
-                ex2.printStackTrace();
-            }
-        }
-        catch (InterruptedException ex3) {
-            ex3.printStackTrace();
-        }
+            
+           
     }
     
-    public void processString(String line) throws AWTException {
+    public void processString(String line) throws AWTException, IOException {
         final Robot robot = new Robot();
         System.out.println(line);
         if (line == null || line.replaceAll(" ", "").equals("")) {
@@ -642,30 +592,9 @@ public class MouseApp
                     final String localUserName = Fr.userName.getText();
                     if (!userName.replaceAll(" ", "").equals(localUserName.replaceAll(" ", ""))) {
                         MouseApp.isLoggedIn = false;
-                        new Thread() {
-                            @Override
-                            public void run() {
-                                try {
-                                    try {
-                                        MouseApp.writeJPG(MouseApp.getErrorImage(), MouseApp.s.getOutputStream(), 0.5f);
-                                    }
-                                    catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
-                                    Thread.sleep(2000L);
-                                }
-                                catch (InterruptedException e2) {
-                                    e2.printStackTrace();
-                                }
-                                MouseApp.this.closeAll();
-                                try {
-                                    Thread.sleep(1000L);
-                                }
-                                catch (InterruptedException e2) {
-                                    e2.printStackTrace();
-                                }
-                            }
-                        }.start();
+                   MouseApp.writeJPG(MouseApp.getErrorImage(), MouseApp.s.getOutputStream(), 0.5f);
+
+                        
                     }
                 }
                 catch (Exception e4) {
@@ -718,9 +647,7 @@ public class MouseApp
                 }
             }
             else {
-                if (line.equals("NULL")) {
-                    throw new NullPointerException("Closing stream");
-                }
+              
                 if (line.startsWith("SHUT_DOWN_IN:")) {
                     final String shut_down_in = line.replace("SHUT_DOWN_IN:", "");
                     this.timeToShutDown = Integer.parseInt(shut_down_in);
@@ -917,11 +844,8 @@ public class MouseApp
                     if (this.thread != null && this.thread.isAlive()) {
                         return;
                     }
-                    (this.thread = new Thread() {
-                        @Override
-                        public void run() {
-                            try {
-                                final OutputStream out = MouseApp.s.getOutputStream();
+                    
+                      final OutputStream out = MouseApp.s.getOutputStream();
                                 if (MouseApp.isLoggedIn) {
                                     MouseApp.writeJPG(MouseApp.this.getComputerScreenshot(), out, MouseApp.qualityPad);
                                 }
@@ -929,106 +853,40 @@ public class MouseApp
                                     MouseApp.writeJPG(MouseApp.getErrorImage(), out, MouseApp.qualityPad);
                                 }
                                 out.flush();
-                            }
-                            catch (IOException ex) {
-                                ex.printStackTrace();
-                                MouseApp.this.closeAll();
-                                try {
-                                    Thread.sleep(1000L);
-                                }
-                                catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                                MouseApp.this.internetConnection();
-                            }
-                            catch (Exception ex2) {
-                                ex2.printStackTrace();
-                                MouseApp.this.closeAll();
-                                try {
-                                    Thread.sleep(1000L);
-                                }
-                                catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                                MouseApp.this.internetConnection();
-                            }
-                            catch (Error ex3) {
-                                ex3.printStackTrace();
-                                MouseApp.this.closeAll();
-                                try {
-                                    Thread.sleep(1000L);
-                                }
-                                catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                                MouseApp.this.internetConnection();
-                            }
-                        }
-                    }).start();
+                  
                 }
                 else if (line.equalsIgnoreCase("CAM_SCREENSHOT")) {
-                    try {
                         if (this.webCam == null) {
                             return;
                         }
                         final OutputStream out = MouseApp.s.getOutputStream();
                         writeJPG(this.webCam.getCameraImage(), out, MouseApp.qualitycamera);
                         out.flush();
-                    }
-                    catch (Exception e4) {
-                        e4.printStackTrace();
-                        this.closeAll();
-                        try {
-                            Thread.sleep(1000L);
-                        }
-                        catch (InterruptedException ex) {
-                            ex.printStackTrace();
-                        }
-                        this.internetConnection();
-                    }
-                    catch (Error e8) {
-                        e8.printStackTrace();
-                        this.closeAll();
-                        try {
-                            Thread.sleep(1000L);
-                        }
-                        catch (InterruptedException ex) {
-                            ex.printStackTrace();
-                        }
-                        this.internetConnection();
-                    }
+                   
                 }
                 else if (line.equalsIgnoreCase("STOP_CAM")) {
                     if (this.webCam == null) {
                         return;
                     }
-                    try {
+                     
                         this.webCam.closeCamera();
                         this.webCam = null;
-                    }
-                    catch (Exception e3) {
-                        e3.printStackTrace();
-                    }
+                    
+                   
                 }
             
-            try {
                 if (MouseApp.s != null) {
                     MouseApp.s.getOutputStream().flush();
                 }
             }
-            catch (IOException e6) {
-                e6.printStackTrace();
-            }
-        }
-        try {
             if (!this.isSignedIn) {
                 this.closeAll();
             }
         }
-        catch (Exception e3) {
-            e3.printStackTrace();
-        }
-}
+            
+        
+       
+
     
     public static void shutdown() throws RuntimeException, IOException {
         final String operatingSystem = System.getProperty("os.name");
@@ -1053,8 +911,10 @@ public class MouseApp
         imageWriteParam.setCompressionMode(2);
         imageWriteParam.setCompressionQuality(quality);
         final ImageOutputStream imageOutputStream = new MemoryCacheImageOutputStream(outputStream);
+        
         imageWriter.setOutput(imageOutputStream);
         final IIOImage iioimage = new IIOImage(bufferedImage, null, null);
+        
         imageWriter.write(null, iioimage, imageWriteParam);
         imageOutputStream.flush();
         outputStream.flush();
@@ -1150,6 +1010,7 @@ public class MouseApp
 			String url = "btspp://localhost:" + uuid.toString()
 					+ ";name=RemoteBluetooth";
 notifier = (StreamConnectionNotifier) Connector.open(url);
+
     }
     catch (Exception e)
     {
@@ -1179,12 +1040,19 @@ notifier = (StreamConnectionNotifier) Connector.open(url);
             {
               MouseApp.this.br = new BufferedReader(new InputStreamReader(
                 MouseApp.this.connection.openInputStream(), "UTF-8"));
-              MouseApp.this.receiver(MouseApp.this.br);
+                if (runConnetions) {
+                 MouseApp.this.receiver(MouseApp.this.br);
+
+                }
             }
             catch (Exception ex)
             {
-              ex.printStackTrace();
+                try {
+                  closeAll();
+                } catch (IOException ex1) {
+ex1.printStackTrace();                }
             }
+            openBT();
           }
         }.start();
       }
